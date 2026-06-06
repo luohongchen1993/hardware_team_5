@@ -4,13 +4,12 @@
 #include "stm32g4xx_hal.h"
 #include <stdint.h>
 
-/* Proximity cue level (spec: enum / uint8_t audio cue level). */
+/* Proximity cue level returned by Audio_Update(). */
 typedef enum {
     AUDIO_CUE_FAR = 0,
     AUDIO_CUE_MID,
     AUDIO_CUE_NEAR,
-    AUDIO_CUE_VERY_NEAR,
-    AUDIO_CUE_WIN
+    AUDIO_CUE_VERY_NEAR
 } AudioCue;
 
 /* Speaker driven by PWM square wave on TIM2 CH1 (PA0). */

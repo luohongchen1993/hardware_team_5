@@ -172,8 +172,12 @@ static void do_win(void)
     /* Replay on button press: new target, reset position estimate. */
     if (button_pressed()) {
         MPU6050_Scaled s;
-        if (MPU6050_ReadScaled(s_i2c, &s_bias, &s) == HAL_OK) Nav_Init(&s_nav, &s);
-        else                                                  Nav_Init(&s_nav, NULL);
+        if (MPU6050_ReadScaled(s_i2c, &s_bias, &s) == HAL_OK) {
+            Nav_Init(&s_nav, &s);
+        } else {
+            SerialLog_Print("WARN: IMU read failed at replay; resetting without accel seed.\r\n");
+            Nav_Init(&s_nav, NULL);
+        }
         place_target();
         LED_Off(LED_ALL);
         LED_Set(LED_GREEN, 1);

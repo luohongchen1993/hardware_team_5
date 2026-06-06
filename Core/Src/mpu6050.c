@@ -51,9 +51,9 @@ HAL_StatusTypeDef MPU6050_Init(I2C_HandleTypeDef *hi2c)
     HAL_StatusTypeDef s;
     uint8_t who = 0;
 
-    /* Identity check: WHO_AM_I returns 0x68 (ignore the lowest/AD0-ish bits). */
+    /* Identity check: WHO_AM_I must return exactly 0x68 (AD0 low, as wired). */
     s = read_regs(hi2c, REG_WHO_AM_I, &who, 1);
-    if (s != HAL_OK || (who & 0x7E) != 0x68) return HAL_ERROR;
+    if (s != HAL_OK || who != 0x68) return HAL_ERROR;
 
     /* Wake from sleep (internal 8 MHz oscillator). */
     s = write_reg(hi2c, REG_PWR_MGMT_1, 0x00);

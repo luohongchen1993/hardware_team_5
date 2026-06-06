@@ -4,13 +4,13 @@
 #
 # This builds the application sources against the STM32CubeG4
 # HAL/CMSIS package. Point CUBE_HAL_DIR at your install, e.g.:
-#   make CUBE_HAL_DIR=/c/Users/you/STM32Cube/Repository/STM32Cube_FW_G4_V1.5.0
+#   make CUBE_HAL_DIR=/c/Users/you/STM32Cube/Repository/STM32CubeG4
 # (See CLAUDE.md "Build & flash" for the one-time HAL setup.)
 ##########################################################
 
 TARGET   = navgame
 BUILD    = build
-CUBE_HAL_DIR ?= $(HOME)/STM32Cube/Repository/STM32Cube_FW_G4_V1.5.0
+CUBE_HAL_DIR ?= $(HOME)/STM32Cube/Repository/STM32CubeG4
 
 ######################################
 # Application sources

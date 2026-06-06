@@ -28,7 +28,6 @@ static const char *cue_name(AudioCue c)
         case AUDIO_CUE_MID:       return "MID";
         case AUDIO_CUE_NEAR:      return "NEAR";
         case AUDIO_CUE_VERY_NEAR: return "VERY_NEAR";
-        case AUDIO_CUE_WIN:       return "WIN";
         default:                  return "?";
     }
 }
@@ -58,7 +57,7 @@ void SerialLog_PrintNav(const NavState *n, GameState state, AudioCue cue)
         (double)n->heading_deg,
         (double)n->distance_m,
         (double)n->bearing_deg,
-        (double)(n->bearing_deg - n->heading_deg),
+        (double)Nav_RelativeBearing(n),
         cue_name(cue));
 
     if (len > 0) {

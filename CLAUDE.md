@@ -76,22 +76,33 @@ Clock: HSI16 → PLL (M/4, N=85, R/2) → **170 MHz**, Range 1 boost, Flash 4 WS
 
 ## Build & flash
 
-CLI build with `arm-none-eabi-gcc` against the **STM32CubeG4** package (HAL/CMSIS + startup).
+✅ **Verified build** — compiles warning-free (`-Wall -Wextra`) with Arm GNU Toolchain 15.2
+against STM32CubeG4; ≈ 37 KB flash / 3 KB RAM. Produces `build/navgame.{elf,bin,hex}`.
 
-**One-time:** install the Arm GNU Toolchain and STM32CubeG4 firmware (via STM32CubeMX/CubeIDE
-"Manage embedded software packages", or download `STM32Cube_FW_G4`). Point the Makefile at it:
+**One-time tool setup** (Windows, no admin, via [scoop](https://scoop.sh)):
 
 ```sh
-make CUBE_HAL_DIR=/c/Users/<you>/STM32Cube/Repository/STM32Cube_FW_G4_V1.5.0
-make clean
-make flash      # OpenOCD + ST-Link
+scoop bucket add extras
+scoop install gcc-arm-none-eabi make openocd
+git clone --recurse-submodules https://github.com/STMicroelectronics/STM32CubeG4 \
+  ~/STM32Cube/Repository/STM32CubeG4     # HAL/CMSIS + startup (uses git submodules)
+```
+
+**Build/flash** from this folder in **Git Bash**. Use a *relative* `CUBE_HAL_DIR` — an absolute
+Windows path's drive-letter `:` trips up `make`/`gcc`, and MSYS `/c/...` paths aren't understood
+by the native gcc:
+
+```sh
+make CUBE_HAL_DIR=../../STM32Cube/Repository/STM32CubeG4
+make flash CUBE_HAL_DIR=../../STM32Cube/Repository/STM32CubeG4   # OpenOCD + ST-Link
 # or: STM32_Programmer_CLI -c port=SWD -w build/navgame.elf -rst
 ```
 
-Output: `build/navgame.elf` (+ `.bin`/`.hex`). We provide the linker script
-(`STM32G474RETx_FLASH.ld`) and Makefile; HAL drivers, `system_stm32g4xx.c`, and
-`startup_stm32g474xx.s` come from the Cube package (referenced by the Makefile). Alternatively
-import into **STM32CubeIDE** for one-click build/flash/debug.
+We commit the linker script, Makefile, and `Core/Inc/stm32g4xx_hal_conf.h` (HAL module/clock
+config — required, copied from the Cube template). HAL driver sources, `system_stm32g4xx.c`, and
+`startup_stm32g474xx.s` come from the Cube package via the Makefile. Or import into
+**STM32CubeIDE** for one-click build/flash/debug. The newlib `_read/_write/...` "not implemented"
+linker warnings are harmless (no runtime file I/O).
 
 ---
 
@@ -219,7 +230,7 @@ any → ERROR (blink code, actuators safe) on unrecoverable I2C fault
 
 ## Open TODO
 
-- [ ] Generate/commit the CubeMX `.ioc` (or vendor the Cube HAL) so `make` runs unattended.
-- [ ] Verify I2C `TIMINGR` and servo/heading sign on real hardware.
-- [ ] Optional: PC-side visualiser fed by the UART telemetry frames.
+- [x] Toolchain + HAL set up; firmware builds clean (Arm GNU 15.2 + STM32CubeG4).
+- [ ] Flash to the board and verify on hardware: servo/heading sign, I2C `TIMINGR`.
+- [ ] Optional: commit a CubeMX `.ioc`; PC-side visualiser fed by the UART telemetry.
 ```
