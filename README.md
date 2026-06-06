@@ -23,80 +23,89 @@ Reach the target and a victory jingle plays.
 
 ## Pinout — what connects where
 
-Pin names like `PB8` are the chip's labels. On the Nucleo-64 board many of them
-also have an easy **Arduino header** label (e.g. `D15`, `A0`) printed near the
-sockets — use whichever is easier to find. "Morpho" means the two long inner
-header rows (not the Arduino sockets).
+Pin names like `PB8` are the chip's labels; on the Nucleo-64 the same pins also have
+**Arduino header** labels (`D15`, `A0`, …) printed beside the outer sockets — use
+whichever is easier to find. The board has two header styles:
 
-**Confirmed parts in this build:** STM32 Nucleo-64 (STM32G474RE) board · Adafruit
-STEMMA Speaker **P3885** (analog amp + speaker) · MPU-6050 accel/gyro. *(The
-HC-SR04 distance sensor mentioned in some docs is NOT used by this game — it
-belonged to the earlier health-monitor idea.)*
+- **Arduino headers** (outer sockets): `CN5` top-right, `CN6` top-left (power), `CN8`
+  bottom-left, `CN9` bottom-right.
+- **ST Morpho headers** (the two long inner rows): `CN7` (left), `CN10` (right).
 
-**Master reference (every pin the program uses)**
+**Confirmed parts:** STM32 Nucleo-64 **STM32G474RE** · Adafruit STEMMA Speaker **P3885**
+(analog Class-D amp + 1 W 8 Ω speaker) · **MPU-6050 / GY-521** accel + gyro. *(The HC-SR04
+in some docs is NOT used — it was the earlier health-monitor idea.)*
 
-| Chip pin | Easy label | Used for | Direction | Connect to |
-|---|---|---|---|---|
-| PB8 | D15 | I2C clock (SCL) → MPU-6050 | out | sensor SCL |
-| PB9 | D14 | I2C data (SDA) → MPU-6050 | in/out | sensor SDA |
-| PA6 | D12 | Servo control signal | out | servo signal wire |
-| PA0 | A0 | Audio signal → STEMMA Speaker | out | speaker signal pad (A+ / "Sig") |
-| PB13 | (Morpho) | Green status LED | out | LED + via ~330 Ω → GND |
-| PB14 | (Morpho) | Amber status LED | out | LED + via ~330 Ω → GND |
-| PB15 | (Morpho) | Red status LED | out | LED + via ~330 Ω → GND |
-| PC13 | (on-board B1) | Replay button | in | already wired on board |
-| PA2 | D1 | Debug text out (UART TX) | out | auto-routed to USB |
-| PA3 | D0 | Debug text in (UART RX) | in | auto-routed to USB |
-| 3V3 | — | Power for the sensor | — | sensor VCC |
-| 5V | — | Power for the servo | — | servo power wire |
-| GND | — | Common ground (shared) | — | every device's GND |
+### Master reference (every pin the program uses)
 
-**1) MPU-6050 motion sensor — 4 wires (I2C)**
+| Function | Chip pin | Board location (label) | Connects to |
+|---|---|---|---|
+| I2C clock (SCL) | PB8 | Arduino **D15** (CN5) | MPU-6050 **SCL** |
+| I2C data (SDA) | PB9 | Arduino **D14** (CN5) | MPU-6050 **SDA** |
+| Servo signal | PA6 | Arduino **D12** (CN5) | servo **signal** (orange/yellow) |
+| Audio signal | PA0 | Arduino **A0** (CN8) | speaker **Signal** (white) |
+| Green LED | PB13 | Morpho **CN10 pin 30** | LED + (via ~330 Ω) |
+| Amber LED | PB14 | Morpho **CN10 pin 28** | LED + (via ~330 Ω) |
+| Red LED | PB15 | Morpho **CN10 pin 26** | LED + (via ~330 Ω) |
+| Replay button | PC13 | on-board **B1** | already wired |
+| Debug TX | PA2 | Arduino **D1** (CN9) | ST-Link USB (auto) |
+| Debug RX | PA3 | Arduino **D0** (CN9) | ST-Link USB (auto) |
+| 3.3 V power | 3V3 | **CN6** power header | MPU-6050 VCC |
+| 5 V power | 5V | **CN6** power header | servo + speaker power |
+| Ground | GND | **CN6** (and many others) | every device GND |
 
-| Sensor pin | Connect to board | Notes |
+> Morpho pin numbers follow the standard Nucleo-64 layout — double-check against the
+> labels on your board / ST manual **UM2505** before soldering. The 3 LEDs are optional;
+> if the inner Morpho row is awkward, ask and I'll move them to Arduino pins.
+
+### 1) MPU-6050 / GY-521 motion sensor (I2C — uses 5 of 8 pins)
+
+| Sensor pin | Connect to | Notes |
 |---|---|---|
-| VCC | 3V3 | sensor runs on 3.3 V logic |
-| GND | GND | ground |
-| SCL | PB8 (D15) | clock line |
-| SDA | PB9 (D14) | data line |
-| AD0 | GND | sets the sensor address to 0x68 (the default) |
+| VCC | **3V3** | sensor runs on 3.3 V |
+| GND | **GND** | ground |
+| SCL | **PB8 / D15** | I2C clock |
+| SDA | **PB9 / D14** | I2C data |
+| AD0 | **GND** | address = 0x68 (default). Tie to 3V3 for 0x69. |
+| XDA, XCL | — | auxiliary I2C (external magnetometer) — leave unconnected |
+| INT | — | data-ready interrupt — not used (we poll) — leave unconnected |
 
-**2) Servo motor — 3 wires**
+### 2) Servo motor (3 wires)
 
-| Servo wire (typical colour) | Connect to board | Notes |
+| Servo wire (typical colour) | Connect to | Notes |
 |---|---|---|
-| Signal (orange/yellow) | PA6 (D12) | control pulse |
-| Power (red) | 5V | see power note below |
-| Ground (brown/black) | GND | ground |
+| Signal (orange / yellow) | **PA6 / D12** | 3.3 V control pulse (servos accept this) |
+| Power (red) | **5V** | see power note below |
+| Ground (brown / black) | **GND** | ground |
 
-**3) Adafruit STEMMA Speaker (P3885) — 3 wires**
+### 3) Adafruit STEMMA Speaker P3885 (3 wires)
 
-A self-contained amplifier + 1 W 8 Ω speaker that accepts a plain audio signal, so the
-square-wave tone from PA0 plugs straight in — no extra parts and no code changes.
+Self-contained amp + speaker that takes a plain **0–3 V audio signal** (internally
+decoupled — no AC-coupling needed), so the PWM tone from PA0 drives it directly. Use
+**either** the 3-pin JST PH cable **or** the alligator/sew pads:
 
-| Speaker pad | Connect to board | Notes |
+| JST PH pin | Pad / colour | Connect to |
 |---|---|---|
-| Signal (A+ / "Sig") | PA0 (A0) | the tone signal from the chip |
-| Vin (power) | 3V3 or 5V | accepts 3–5 V; 5 V is a bit louder |
-| GND | GND | ground |
+| 1 | Signal (SIG) — white | **PA0 / A0** |
+| 2 | Power (+) — red | **3V3 or 5V** (3–5 V; 5 V = louder) |
+| 3 | Ground (−) — black | **GND** |
 
-Turn the small screwdriver pot on the board to set the volume. (Uses the larger **STEMMA**
-3-pin JST PH connector — *not* the smaller STEMMA QT. You can also use the alligator/sew pads.)
+Set volume with the on-board trim pot (small screwdriver). *(This is the larger **STEMMA**
+connector — not the smaller STEMMA QT.)*
 
-**4) Status LEDs — optional, 3 LEDs**
+### 4) Status LEDs — optional (3 LEDs)
 
-Each LED's long leg (+) goes to its pin through a ~330 Ω resistor; the short leg (−) goes to GND.
-Green → PB13, Amber → PB14, Red → PB15. These three are on the **Morpho** header.
+Long leg (+) → the pin **through a ~330 Ω resistor**; short leg (−) → GND.
+Green → **PB13 (CN10-30)**, Amber → **PB14 (CN10-28)**, Red → **PB15 (CN10-26)**.
 
-**5) Replay button** — the blue **B1** button already on the board (PC13). Nothing to wire.
+### 5) Replay button & 6) Debug — nothing to wire
 
-**6) Debug messages** — PA2/PA3 are wired by the board to the on-board ST-Link USB chip, so the
-text log reaches your computer over the same USB cable. Nothing to wire.
+The blue **B1** button (PC13) and the USB debug log (PA2/PA3 → ST-Link) are already wired
+on the board; the log reaches your PC over the same USB cable.
 
-> ⚠️ **Wiring notes**
-> - **Tie all grounds (GND) together** — sensor, servo, speaker, and board must share one common ground, or nothing will read correctly.
-> - **Servo power:** use a separate **5 V** supply for the servo if it twitches or the board resets — servos can pull more current than the board pin can give. Keep its ground common with the board.
-> - **Sensor power:** the MPU-6050 must be on **3V3**, not 5 V.
+> ⚠️ **Wiring must-dos**
+> - **Tie all grounds together** — board, sensor, servo, and speaker share one common GND, or readings/sound fail.
+> - **Servo power:** if it jitters or the board resets, give the servo its own **5 V** supply (keep its GND common). The board's 5V can be weak for servos.
+> - **Sensor power:** MPU-6050 on **3V3**, never 5 V.
 
 ## Build & flash
 
