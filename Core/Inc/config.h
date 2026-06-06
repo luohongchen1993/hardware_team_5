@@ -52,6 +52,7 @@
  * stride (~0.65 m) per detected step, so a win zone smaller than a stride can
  * never be entered and the game can never be won. ~0.9 m (~3 ft) reliably wins. */
 #define WIN_RADIUS_M            0.90f         /* ~3 ft win threshold (must exceed STRIDE_M) */
+#define MIN_TARGET_DIST_M       3.0f          /* target spawns >= this far from start; no instant/trivial win (keep < GRID_HALF_EXTENT_M) */
 
 /* ---------------------------------------------------------
  * Sensor fusion.

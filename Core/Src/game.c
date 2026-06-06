@@ -52,8 +52,18 @@ static float prng_range(float lo, float hi) { return lo + prng_float01() * (hi -
 
 static void place_target(void)
 {
-    s_target.x = prng_range(-GRID_HALF_EXTENT_M, GRID_HALF_EXTENT_M);
-    s_target.y = prng_range(-GRID_HALF_EXTENT_M, GRID_HALF_EXTENT_M);
+    /* Random target, but at least MIN_TARGET_DIST_M from the origin so the round
+     * is never an instant/trivial win. Rejection sampling: the valid area is large
+     * (min distance < grid extent), so this converges in ~1-2 tries; the attempt
+     * cap is just a defensive backstop. */
+    for (int attempt = 0; attempt < 32; attempt++) {
+        s_target.x = prng_range(-GRID_HALF_EXTENT_M, GRID_HALF_EXTENT_M);
+        s_target.y = prng_range(-GRID_HALF_EXTENT_M, GRID_HALF_EXTENT_M);
+        if (s_target.x * s_target.x + s_target.y * s_target.y >=
+            MIN_TARGET_DIST_M * MIN_TARGET_DIST_M) {
+            break;
+        }
+    }
     s_target.z = 0.0f;
 
     char buf[96];
