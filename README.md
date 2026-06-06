@@ -21,16 +21,70 @@ Reach the target and a victory jingle plays.
 > drifts (metres over tens of seconds). Heading/bearing is reliable; absolute
 > displacement is approximate. See `CLAUDE.md` for the full rationale.
 
-## Hardware / wiring
+## Pinout — what connects where
 
-| Peripheral | MCU | Pins |
+Pin names like `PB8` are the chip's labels. On the Nucleo-64 board many of them
+also have an easy **Arduino header** label (e.g. `D15`, `A0`) printed near the
+sockets — use whichever is easier to find. "Morpho" means the two long inner
+header rows (not the Arduino sockets).
+
+**Master reference (every pin the program uses)**
+
+| Chip pin | Easy label | Used for | Direction | Connect to |
+|---|---|---|---|---|
+| PB8 | D15 | I2C clock (SCL) → MPU-6050 | out | sensor SCL |
+| PB9 | D14 | I2C data (SDA) → MPU-6050 | in/out | sensor SDA |
+| PA6 | D12 | Servo control signal | out | servo signal wire |
+| PA0 | A0 | Speaker/buzzer signal | out | speaker + |
+| PB13 | (Morpho) | Green status LED | out | LED + via ~330 Ω → GND |
+| PB14 | (Morpho) | Amber status LED | out | LED + via ~330 Ω → GND |
+| PB15 | (Morpho) | Red status LED | out | LED + via ~330 Ω → GND |
+| PC13 | (on-board B1) | Replay button | in | already wired on board |
+| PA2 | D1 | Debug text out (UART TX) | out | auto-routed to USB |
+| PA3 | D0 | Debug text in (UART RX) | in | auto-routed to USB |
+| 3V3 | — | Power for the sensor | — | sensor VCC |
+| 5V | — | Power for the servo | — | servo power wire |
+| GND | — | Common ground (shared) | — | every device's GND |
+
+**1) MPU-6050 motion sensor — 4 wires (I2C)**
+
+| Sensor pin | Connect to board | Notes |
 |---|---|---|
-| MPU-6050 IMU (I2C @ 0x68) | I2C1 | PB8=SCL, PB9=SDA, 3V3, GND |
-| Servo (SG90-class) | TIM3_CH1 | **PA6** = signal, 5V, GND |
-| Speaker / piezo (PWM tone) | TIM2_CH1 | **PA0** = signal, GND |
-| Status LEDs (green/amber/red) | GPIO | PB13 / PB14 / PB15 (+ resistors to GND) |
-| Replay button | GPIO | B1 (PC13, on-board) |
-| Telemetry | USART2 | ST-Link VCP, 115200 8N1 |
+| VCC | 3V3 | sensor runs on 3.3 V logic |
+| GND | GND | ground |
+| SCL | PB8 (D15) | clock line |
+| SDA | PB9 (D14) | data line |
+| AD0 | GND | sets the sensor address to 0x68 (the default) |
+
+**2) Servo motor — 3 wires**
+
+| Servo wire (typical colour) | Connect to board | Notes |
+|---|---|---|
+| Signal (orange/yellow) | PA6 (D12) | control pulse |
+| Power (red) | 5V | see power note below |
+| Ground (brown/black) | GND | ground |
+
+**3) Speaker / buzzer — 2 wires**
+
+| Speaker wire | Connect to board |
+|---|---|
+| + (signal) | PA0 (A0) |
+| − (ground) | GND |
+
+**4) Status LEDs — optional, 3 LEDs**
+
+Each LED's long leg (+) goes to its pin through a ~330 Ω resistor; the short leg (−) goes to GND.
+Green → PB13, Amber → PB14, Red → PB15. These three are on the **Morpho** header.
+
+**5) Replay button** — the blue **B1** button already on the board (PC13). Nothing to wire.
+
+**6) Debug messages** — PA2/PA3 are wired by the board to the on-board ST-Link USB chip, so the
+text log reaches your computer over the same USB cable. Nothing to wire.
+
+> ⚠️ **Wiring notes**
+> - **Tie all grounds (GND) together** — sensor, servo, speaker, and board must share one common ground, or nothing will read correctly.
+> - **Servo power:** use a separate **5 V** supply for the servo if it twitches or the board resets — servos can pull more current than the board pin can give. Keep its ground common with the board.
+> - **Sensor power:** the MPU-6050 must be on **3V3**, not 5 V.
 
 ## Build & flash
 
