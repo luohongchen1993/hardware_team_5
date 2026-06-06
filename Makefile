@@ -35,6 +35,7 @@ C_SOURCES += $(HAL_SRC)/stm32g4xx_hal.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_rcc.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_rcc_ex.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_cortex.c
+C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_pwr.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_pwr_ex.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_gpio.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_i2c.c
