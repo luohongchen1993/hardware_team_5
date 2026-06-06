@@ -28,6 +28,11 @@ also have an easy **Arduino header** label (e.g. `D15`, `A0`) printed near the
 sockets — use whichever is easier to find. "Morpho" means the two long inner
 header rows (not the Arduino sockets).
 
+**Confirmed parts in this build:** STM32 Nucleo-64 (STM32G474RE) board · Adafruit
+STEMMA Speaker **P3885** (analog amp + speaker) · MPU-6050 accel/gyro. *(The
+HC-SR04 distance sensor mentioned in some docs is NOT used by this game — it
+belonged to the earlier health-monitor idea.)*
+
 **Master reference (every pin the program uses)**
 
 | Chip pin | Easy label | Used for | Direction | Connect to |
@@ -35,7 +40,7 @@ header rows (not the Arduino sockets).
 | PB8 | D15 | I2C clock (SCL) → MPU-6050 | out | sensor SCL |
 | PB9 | D14 | I2C data (SDA) → MPU-6050 | in/out | sensor SDA |
 | PA6 | D12 | Servo control signal | out | servo signal wire |
-| PA0 | A0 | Speaker/buzzer signal | out | speaker + |
+| PA0 | A0 | Audio signal → STEMMA Speaker | out | speaker signal pad (A+ / "Sig") |
 | PB13 | (Morpho) | Green status LED | out | LED + via ~330 Ω → GND |
 | PB14 | (Morpho) | Amber status LED | out | LED + via ~330 Ω → GND |
 | PB15 | (Morpho) | Red status LED | out | LED + via ~330 Ω → GND |
@@ -64,12 +69,19 @@ header rows (not the Arduino sockets).
 | Power (red) | 5V | see power note below |
 | Ground (brown/black) | GND | ground |
 
-**3) Speaker / buzzer — 2 wires**
+**3) Adafruit STEMMA Speaker (P3885) — 3 wires**
 
-| Speaker wire | Connect to board |
-|---|---|
-| + (signal) | PA0 (A0) |
-| − (ground) | GND |
+A self-contained amplifier + 1 W 8 Ω speaker that accepts a plain audio signal, so the
+square-wave tone from PA0 plugs straight in — no extra parts and no code changes.
+
+| Speaker pad | Connect to board | Notes |
+|---|---|---|
+| Signal (A+ / "Sig") | PA0 (A0) | the tone signal from the chip |
+| Vin (power) | 3V3 or 5V | accepts 3–5 V; 5 V is a bit louder |
+| GND | GND | ground |
+
+Turn the small screwdriver pot on the board to set the volume. (Uses the larger **STEMMA**
+3-pin JST PH connector — *not* the smaller STEMMA QT. You can also use the alligator/sew pads.)
 
 **4) Status LEDs — optional, 3 LEDs**
 

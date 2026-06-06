@@ -25,9 +25,10 @@ conventions. Read it before writing or changing code; keep it updated when decis
 
 ## Assumptions worth confirming on real hardware
 
-1. **Audio = PWM square-wave tone to a small speaker/piezo** on PA0 (not an I2C audio chip).
-   Variable-pitch beeps are trivial and robust over PWM. Swap only `audio.c` if the real part
-   differs.
+1. **Audio = Adafruit STEMMA Speaker (P3885)** on PA0 — a self-contained Class-D amp + 1 W 8 Ohm
+   speaker that accepts a plain analog signal (up to supply Vpp, no AC-coupling needed). The PWM
+   square-wave tone drives it directly: signal->PA0, Vin->3-5 V, GND->GND. CONFIRMED hardware,
+   no code change. (This is the larger STEMMA connector, NOT the I2C "STEMMA QT" variant.)
 2. **MPU-6050 I2C address 0x68** (AD0 low). Change `MPU6050_I2C_ADDR` in `config.h` for 0x69.
 3. **2D navigation** in the horizontal X-Y plane; target at z=0; servo points a horizontal bearing.
 4. **Dead-reckoning position drifts** (consumer MEMS double-integration). Bounded by ZUPT but
