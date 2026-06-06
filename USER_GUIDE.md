@@ -191,7 +191,7 @@ The hardware random number generator was unavailable. The game continues normall
 Caused by moving during calibration. Power-cycle (unplug/replug USB) and hold the board completely still for the 2-second amber-LED phase.
 
 **The beeping says I'm close but I can't find anything.**
-This is expected behaviour. The position estimate drifts over time (this is a known hardware limitation of dead-reckoning — see note below). Follow the servo direction rather than distance alone. The bearing is reliable; the absolute position is approximate.
+The board tracks position by counting your steps, so if your real stride is longer or shorter than it assumes, the distance can read a little off. Follow the servo direction as well as the beeps. If it's consistently off, tune `STRIDE_M` in `config.h` — make it bigger if the board thinks you've travelled too far, smaller if not far enough.
 
 **The servo doesn't move at all.**
 Check the wiring on PA6 (Arduino D12). Make sure the servo power (red wire) has 5 V and that the servo's ground wire is connected to the board's GND. If the startup self-test did not show the servo sweeping, the servo was already not working at boot.
@@ -208,7 +208,7 @@ The calibration phase is exactly 2 seconds long. Put the board down on a flat su
 **The target seems to always be in the same general area game after game.**
 This happens when the hardware RNG is unavailable (4 amber blinks at startup). The game is using a fixed seed and will produce the same sequence of targets every time. This is harmless but predictable.
 
-> **On position drift:** The board estimates its position by measuring acceleration and integrating it twice to get distance. This technique (dead-reckoning) accumulates errors quickly — expect a few feet of error after 30–60 seconds of walking. The servo direction (bearing) does not have this problem because it uses the gyroscope, which is much more accurate. After several minutes of play the position estimate may be significantly off, but the servo will still point you roughly in the right direction. Starting a new round with B1 resets the estimate.
+> **How position is tracked:** The board works like a pedometer — it counts your footsteps (from the accelerometer) and moves you one stride in your facing direction per step. This is far steadier than adding up raw acceleration, and tilting the board no longer fakes movement. Two things can still drift slowly: your real stride versus the assumed `STRIDE_M`, and the gyro-based compass heading over several minutes. If the pointer feels rotated after a long game, press B1 to reset.
 
 ---
 
@@ -223,7 +223,7 @@ Here is a script for demonstrating the game to someone who has never seen it. Th
 
 **Script:**
 
-*"This is a navigation game running on a bare-metal microcontroller — no phone, no GPS, no Wi-Fi. Somewhere in this room, an invisible target has been placed at a random location. The board doesn't know where it is — it figures out where I'VE been by measuring the acceleration of my every step."*
+*"This is a navigation game running on a bare-metal microcontroller — no phone, no GPS, no Wi-Fi. Somewhere in this room, an invisible target has been placed at a random location. The board figures out where I am like a pedometer — it counts my footsteps and tracks which way I'm facing."*
 
 [Hold up the board]
 
@@ -257,9 +257,9 @@ Here is a script for demonstrating the game to someone who has never seen it. Th
 
 - **Do a slow spin when you feel lost.** Stand still and turn in a full circle, watching the servo. It will sweep from one side to the other as you rotate through the target direction — the centre point of that sweep is where the target is.
 
-- **Keep the board flat.** The sensor assumes gravity is pointing straight down. Tilting the board more than about 30° confuses the tilt estimate and can skew the bearing calculation.
+- **Keep the board roughly flat and level.** Holding it flat keeps the turn sensor (gyro Z) aligned with your real turning, so the compass stays accurate. Tilt no longer fakes movement, but a strongly tilted board can mis-track your turns.
 
-- **Short games are more accurate than long ones.** The position estimate drifts with time and distance walked. If you cannot find the target after a few minutes, press B1 to reset with a fresh start.
+- **If a game runs long, reset with B1.** The compass heading drifts slowly over several minutes (there's no magnetometer). If the pointer starts to feel rotated, press B1 for a fresh start.
 
 - **If the servo is pegged hard left or right:** the target is somewhere behind you. Do a 180° turn.
 
