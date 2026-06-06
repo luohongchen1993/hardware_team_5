@@ -48,7 +48,10 @@
  * each cardinal direction; win when within ~1 ft (0.3048 m).
  * --------------------------------------------------------- */
 #define GRID_HALF_EXTENT_M      6.096f        /* +/-20 ft per axis (X,Y) */
-#define WIN_RADIUS_M            0.1524f       /* ~6 in (15 cm) win threshold (configurable) */
+/* Win zone radius. MUST be larger than STRIDE_M: position advances one whole
+ * stride (~0.65 m) per detected step, so a win zone smaller than a stride can
+ * never be entered and the game can never be won. ~0.9 m (~3 ft) reliably wins. */
+#define WIN_RADIUS_M            0.90f         /* ~3 ft win threshold (must exceed STRIDE_M) */
 
 /* ---------------------------------------------------------
  * Sensor fusion.

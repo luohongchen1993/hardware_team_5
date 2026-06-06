@@ -10,7 +10,7 @@ everything you need to say is here, in plain English, with the impressive techni
 > "We built a **physical treasure-hunt game that runs entirely on a single microcontroller** —
 > no phone, no GPS, no Wi-Fi, no computer. You hold the board and walk around a room. A **motor
 > arm physically points toward a hidden target** like a compass needle, and a **speaker beeps
-> faster and higher the closer you get**, like a Geiger counter. Get within six inches and it
+> faster and higher the closer you get**, like a Geiger counter. Get within a few feet and it
 > plays a victory fanfare. Everything — sensing your motion, the math, the sound, the pointer —
 > happens on the chip in real time, a hundred times a second."
 
@@ -153,7 +153,7 @@ because there's no compass chip — a known, honest limitation, and an easy futu
 | Program size | **~37 KB** of flash (out of 512 KB), ~3 KB of RAM (out of 128 KB) |
 | Memory model | **Zero dynamic allocation** — fully deterministic |
 | Sensor rate | ~125 readings/second over I2C |
-| Win distance | within **6 inches (15 cm)** of the hidden target |
+| Win distance | within **~3 feet (0.9 m)** of the hidden target |
 | Play area | up to **~20 feet** in any direction |
 
 ---

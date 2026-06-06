@@ -14,7 +14,7 @@
 
 You power on the board, hold it still for two seconds while it calibrates, and the green LED lights up. A random target has just been placed somewhere in a 40 × 40 ft virtual grid around you.
 
-The servo arm is your compass — when it points straight ahead you are headed directly at the target; when it swings sideways, you need to turn. The speaker is your radar — slow low thumps when you are cold, building to a rapid high-pitched chatter when you are burning hot. Get within one foot and the board erupts in a four-note fanfare and a full LED celebration. Get within six inches (15 cm) and you win.
+The servo arm is your compass — when it points straight ahead you are headed directly at the target; when it swings sideways, you need to turn. The speaker is your radar — slow low thumps when you are cold, building to a rapid high-pitched chatter when you are burning hot. Get within about three feet (0.9 m) and the board erupts in a four-note fanfare, a servo waggle, and a full LED celebration — you win.
 
 Press B1, and the game resets with a fresh target.
 
@@ -190,7 +190,7 @@ Both pitch and beep speed increase continuously as you close in. The table below
 | Warm | 14 – 22 ft (4–7 m) | 300–1200 Hz | 1–2 / sec | Off |
 | Hot | 5 – 14 ft (1.5–4 m) | 1200–1750 Hz | 2–5 / sec | Pulsing |
 | Burning | 1 – 5 ft (0.3–1.5 m) | 1750–2000 Hz | 5–10 / sec | Solid |
-| **Win** | **< 6 in (15 cm)** | **Victory jingle** | — | **Solid** |
+| **Win** | **< 3 ft (0.9 m)** | **Victory jingle** | — | **Solid** |
 
 **Win jingle:** C5 (523 Hz) → E5 (659 Hz) → G5 (784 Hz) → C6 (1047 Hz, held). All notes 150 ms; final note 300 ms.
 
