@@ -28,5 +28,23 @@ node_modules/
 dist/
 build/
 
+# Embedded / STM32 build artifacts
+build/
+Debug/
+Release/
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.su
+
+# STM32CubeIDE / Eclipse workspace metadata
+.metadata/
+.settings/
+*.launch
+
 # Logs
 *.log
