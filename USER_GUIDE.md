@@ -1,253 +1,291 @@
-# Navigation Game — User Guide
+# Navigation Game — Complete Player Guide
 
 ---
 
-## What is this?
+## What is this game?
 
-You hold the board and walk around the room. A hidden virtual target has been
-placed somewhere within roughly a 40 ft × 40 ft area around where you powered on.
+You hold a circuit board and walk around the room. Somewhere in the space around you, an invisible target has been placed. Your job is to find it.
 
-**The servo is your compass.** When it points straight forward, you are
-heading directly toward the target. When it swings left or right, turn that
-direction.
+The board gives you two clues:
 
-**The beeps are your radar.** Slow and low-pitched means far away. Fast and
-high-pitched means close. Very fast near-continuous beeping means you are almost
-on top of it.
+- **A servo arm** that physically rotates to point toward the target — like a compass needle. When it points straight ahead, walk forward. When it swings left, turn left.
+- **A speaker** that beeps faster and higher as you get closer — like a Geiger counter near radiation. Slow low thumps = cold. Rapid high-pitched chirps = burning hot.
 
-**Reach the target and you win** — the board plays a victory jingle, the LEDs
-celebrate, and you press the button to play again.
+Get within one foot of the target and you win. A victory jingle plays, the board celebrates, you press a button, and a new target appears.
+
+That's it. Walk toward the beeping.
 
 ---
 
-## Step-by-step: a full game
+## Before You Start — Check These First
 
-### 1. Power on
+Go through this list before powering on. Skipping steps here causes confusing behaviour later.
 
-The board starts initialising. The amber LED turns on.
+- [ ] All three ground wires are connected to the same GND rail (board, sensor, servo, speaker)
+- [ ] The MPU-6050 sensor is connected to the **3.3 V** pin, NOT the 5 V pin
+- [ ] The servo signal wire goes to **PA6 (Arduino D12)**
+- [ ] The speaker signal wire goes to **PA0 (Arduino A0)**
+- [ ] The USB cable is plugged in (this is the power source)
+- [ ] You have a clear open space of at least 10 × 10 ft to walk in
+- [ ] You know where the **B1 button** is on the board (the small blue button labelled USER or B1)
 
-**Hold the board completely still** for about 2 seconds. The firmware is
-measuring the sensor's resting noise floor so it can subtract it from every
-future reading. If you move it during this window, the heading estimate will
-be off for the whole game.
+---
 
-You will hear nothing and see only the amber LED during this phase.
+## Startup: What Happens When You Power On
 
-### 2. Target placed — start seeking
+The moment you plug in USB (or press reset), the board runs a **hardware self-test** to prove every part is working before the game starts. This lasts about 2 seconds.
 
-The amber LED goes off. The **green LED turns on and stays on** for the rest
-of the round. A message appears on the serial terminal (if connected):
+### What you will see and hear:
 
 ```
-Target placed at (3.24, -1.87) m. Go find it!
+1. Green LED turns on   (150 ms)
+2. Amber LED turns on   (150 ms)
+3. Red LED turns on     (150 ms)
+4. All LEDs off briefly
+5. All LEDs flash once together
+6. Servo sweeps: CENTRE → hard LEFT → hard RIGHT → CENTRE
+7. Three short ascending beeps: bloop... bloop... bloop
 ```
 
-The servo moves to its starting position and the beeping begins.
+**If all of that happens:** every piece of hardware is working. 
 
-### 3. Finding the target
+**If the servo does not move:** check wiring to PA6 and the 5 V power.
 
-Walk around normally, holding the board at about waist height and roughly flat
-(face-up). The sensor assumes gravity is pointing down, so tilting it strongly
-will confuse the position estimate.
+**If you hear no beeps:** check wiring to PA0 and the speaker power wire.
 
-**Follow the servo.** It points toward the target relative to whichever way you
-are facing. If it is pointing left, turn left until it centres.
-
-**Follow the beeps.** Use the table below to understand what you are hearing.
+**If you see red LEDs blinking and everything stops:** see the [Error Codes](#error-codes) section below.
 
 ---
 
-## Beep guide
+## Step 1 — Calibration (Hold Still!)
 
-All beeps are a single short tone. Pitch and speed both increase as you get closer.
+Immediately after the self-test, the **amber LED turns on** and stays on. This is the calibration phase.
 
-| Zone | Distance | Pitch | Speed | Feel |
-|---|---|---|---|---|
-| Far | > 22 ft (6.8 m) | ~300 Hz (low) | 1 beep / 800 ms | Slow, low thumps |
-| Mid | 14 – 22 ft (4.2 – 6.8 m) | ~300–1200 Hz | 1–2 beeps / sec | Noticeably quickening |
-| Near | 5 – 14 ft (1.6 – 4.2 m) | ~1200–1750 Hz | 2–5 beeps / sec | Fast, higher pitch; **amber LED starts pulsing** |
-| Very near | 1 – 5 ft (0.3 – 1.6 m) | ~1750–2000 Hz | 5–10 beeps / sec | Rapid, high-pitched; **amber LED stays on** |
-| Win | < 1 ft (0.3 m) | — | — | Victory jingle plays |
+### What to do:
 
-Beyond 30 ft (9 m) the beep pitch stays at its lowest (300 Hz) and cadence stays
-at its slowest (one beep every 800 ms). Moving farther away does not change the
-sound — you are already at maximum "cold."
+**Set the board flat on a table or hold it perfectly still for 2 full seconds.**
 
----
+The board is measuring what "not moving" looks like so it can subtract that noise from your movements during the game. If you move it now, your heading will be wrong for the whole round.
 
-## The amber LED
+### What you should see:
+- Amber LED: solid on
+- Speaker: silent
+- Servo: staying at centre
 
-The amber LED gives a visual hint that mirrors the audio:
+### What you should NOT do during calibration:
+- ❌ Do not walk around
+- ❌ Do not tilt the board
+- ❌ Do not bump the table
 
-- **Off** — you are in the Far or Mid zone
-- **Pulses** — you are in the Near zone (within ~14 ft)
-- **Solid on** — you are in the Very Near zone (within ~5 ft)
+> **If the game always seems to point you in the wrong direction**, this is almost always caused by moving during calibration. Unplug USB, plug it back in, and hold still.
 
 ---
 
-## Winning
+## Step 2 — Game Starts
 
-When you get within about 1 foot (30 cm) of the target:
+After calibration (about 2 seconds), you will see:
 
-1. The servo centres and holds (pointing straight ahead).
-2. The beeping stops.
-3. The board plays a **4-note ascending jingle**: C → E → G → high C (like a
-   triumph fanfare). The last note is held for an extra beat.
-4. All three LEDs (green, amber, red) flash together 6 times.
-5. The green LED stays on.
-6. The serial terminal prints: `>>> TARGET REACHED - YOU WIN! <<<`
+- Amber LED turns **off**
+- Green LED turns **on** (stays on the whole round)
+- Servo moves to its starting position
+- Beeping starts immediately
 
-The board then waits. Nothing will happen until you press the button.
+A hidden target has just been placed somewhere within roughly **20 feet** of where you are standing. It could be in any direction — behind you, to the side, ahead.
 
----
-
-## Playing again
-
-Press the **B1 button** (the blue button on the Nucleo board, labelled B1 or USER).
-
-- A brand-new target is placed at a random location.
-- Your position and heading estimate resets to zero from wherever you are standing.
-- The servo moves to the new direction.
-- Beeping resumes immediately.
-
-**Note:** Your starting position for the new round is wherever you are standing
-when you press B1, not necessarily where you started the first round.
+**Pick up the board (if you put it down), hold it at about waist height, roughly flat (face-up), and start walking.**
 
 ---
 
-## LED summary
+## Step 3 — Finding the Target
 
-| LED | Colour | Meaning |
+### How to use the servo
+
+The servo arm points toward the target **relative to the direction you are facing right now**.
+
+Think of it like a compass that always points at the target, but it reads relative to you:
+
+| Servo position | What it means | What to do |
 |---|---|---|
-| Green (PB13) | Solid on | Actively seeking a target |
-| Amber (PB14) | Pulses / solid | Getting close (Near / Very Near zone) |
-| Amber (PB14) | 4 slow blinks once at startup | Hardware random number generator unavailable — game continues normally with a fixed random seed |
-| Red (PB15) | 2 blinks, then halts | MPU-6050 sensor not found — check wiring |
-| Red (PB15) | 3 blinks, then halts | I2C communication error — check wiring |
-| Red (PB15) | Fast strobe, halts | Fatal hardware init failure |
-| All three | 6 rapid flashes | Win celebration |
+| Pointing straight ahead | Target is directly in front of you | Walk forward |
+| Swung to the LEFT | Target is to your left | Turn LEFT until it centres |
+| Swung to the RIGHT | Target is to your right | Turn RIGHT until it centres |
+| Pointing hard left (maximum) | Target is behind you to the left | Turn around |
+| Pointing hard right (maximum) | Target is behind you to the right | Turn around |
 
----
+**Important:** The servo updates 100 times per second, so it responds instantly as you turn. Turn slowly and watch it swing until it centres — then walk in that direction.
 
-## Tips
+### How to use the beeps
 
-- **Stand still during calibration.** Even a small wobble during those first
-  2 seconds adds a permanent offset to your heading. If the servo seems to
-  point in the wrong direction from the start, power-cycle and hold still.
+Every beep is a single short tone. The pitch and the speed both increase as you close in.
 
-- **Move at a natural walking pace.** The position estimate is based on
-  integrating acceleration. Very fast movements and abrupt stops accumulate
-  more error. Slow, smooth movement works best.
-
-- **Trust the servo direction more than the distance.** The heading/bearing
-  estimate is much more reliable than the absolute position. If the beep says
-  "close" but the servo is pointing sideways, trust the servo — you may be
-  near the target in terms of raw noise but the bearing is geometrically more
-  accurate.
-
-- **The grid is virtual.** There are no physical walls. A target could be
-  placed up to ~20 ft (6.1 m) from your starting point in any horizontal
-  direction.
-
-- **The position drifts.** This is inherent to dead-reckoning with a phone-grade
-  accelerometer. After 30–60 seconds of movement expect several feet of
-  accumulated error. The beeping and servo will still guide you, but the
-  serial terminal's position numbers will diverge from reality over time.
-
----
-
-## Custom victory sound
-
-### What is currently possible
-
-The board generates audio as a **square-wave tone** — the same way an 8-bit
-game console makes beeps. It cannot play back MP3s or WAV files directly.
-
-The current win jingle is a hardcoded 4-note melody:
-
-```
-C5 (523 Hz) → E5 (659 Hz) → G5 (784 Hz) → C6 (1047 Hz) → hold C6
-```
-
-### Option 1 — Change the melody (works today, easy)
-
-Edit the `notes[]` array in `Core/Src/audio.c` inside `Audio_WinJingle()`.
-Each entry is a frequency in Hz. You can add as many notes as you want and
-change the `HAL_Delay` durations to control how long each note lasts.
-
-```c
-// Example: "Super Mario" style fanfare
-static const uint32_t notes[] = {
-    523U,  /* C5 */
-    523U,  /* C5 */
-    0U,    /* rest */
-    523U,  /* C5 */
-    0U,    /* rest */
-    415U,  /* Ab4 */
-    523U,  /* C5 */
-    659U,  /* E5 */
-    784U,  /* G5 */
-};
-```
-
-Add a `HAL_Delay` (in milliseconds) after each note to set its length. A rest
-is a note with frequency 0 (calls `Audio_SetTone(htim, 0)` which silences output).
-The current code plays each note for 150 ms and holds the last one for 300 ms.
-
-Common musical note frequencies for reference:
-
-| Note | Freq (Hz) | Note | Freq (Hz) |
+| What you hear | Zone | Distance | Amber LED |
 |---|---|---|---|
-| C4 (middle C) | 262 | C5 | 523 |
-| D4 | 294 | D5 | 587 |
-| E4 | 330 | E5 | 659 |
-| F4 | 349 | F5 | 698 |
-| G4 | 392 | G5 | 784 |
-| A4 | 440 | A5 | 880 |
-| B4 | 494 | B5 | 988 |
-| — | — | C6 | 1047 |
+| Slow, low thumps — one every second | Cold | > 22 ft away | Off |
+| Faster, slightly higher tones | Warm | 14–22 ft away | Off |
+| Noticeably quick, clearly higher pitch | Hot | 5–14 ft away | **Pulsing** |
+| Rapid high-pitched chirps | Burning | 1–5 ft away | **Solid on** |
+| You stop and the jingle plays | **WIN** | < 1 ft away | Solid |
 
-### Option 2 — Multi-note melody with custom timing (works today, moderate effort)
+**The pitch and speed change continuously** — there are no sudden jumps. As you step toward the target you should hear the tone rising and the cadence quickening at the same time.
 
-Instead of a fixed delay per note, use a note-duration table:
+### The golden rule: trust the servo, use the beeps for distance
 
-```c
-typedef struct { uint32_t freq_hz; uint32_t dur_ms; } Note;
+The servo direction is more reliable than the absolute position estimate. If the beep says you are close but the servo is pointing sideways, trust the servo and turn — you are probably at the right distance but facing the wrong way.
 
-static const Note melody[] = {
-    { 784U, 100U },   /* G5 short */
-    { 784U, 100U },   /* G5 short */
-    { 784U, 100U },   /* G5 short */
-    { 622U, 700U },   /* Eb5 long */
-    { 0U,   50U  },   /* rest     */
-    { 698U, 100U },   /* F5 short */
-    /* ... */
-};
-for (uint32_t i = 0; i < sizeof melody / sizeof melody[0]; i++) {
-    Audio_SetTone(htim, melody[i].freq_hz);
-    HAL_Delay(melody[i].dur_ms);
-}
-Audio_Off(htim);
+---
+
+## Step 4 — Winning
+
+When you get within about **one foot (30 cm)** of the target location:
+
+1. Servo centres and holds still
+2. Beeping stops
+3. The board plays a **four-note ascending fanfare** (C → E → G → HIGH C)
+4. The servo does a **three-swing celebration waggle** left-right-left
+5. All three LEDs flash together six times
+6. Green LED stays on
+7. The board waits for you to press B1
+
+Serial terminal (if connected) prints:
+```
+>>> TARGET REACHED - YOU WIN! <<<
+Press B1 to play again.
 ```
 
-This gives you full control over rhythm and timing without any extra hardware.
+Nothing will happen until you press the button — take your time celebrating.
 
-### Option 3 — Sampled audio (requires hardware change, significant effort)
+---
 
-The STM32G474RE chip has a built-in 12-bit DAC on pins PA4 and PA5. By wiring
-one of those pins to the STEMMA amp's signal input (instead of the current PA0
-PWM pin), you could play back a short recorded sound stored as raw audio data
-in the chip's flash memory.
+## Step 5 — Playing Again
 
-**Constraints:**
-- The chip has 512 KB of flash total, shared with the firmware code (~50 KB used).
-  That leaves roughly 460 KB for audio data.
-- At 8 kHz mono 8-bit (telephone quality): ~57 seconds of audio.
-- At 16 kHz mono 16-bit (clearer): ~14 seconds of audio.
-- Requires rewiring PA4 → amp signal input and removing the PA0 connection.
-- Requires new firmware: a DMA-driven DAC playback routine to output the sample
-  array at the correct sample rate without blocking the super-loop.
+Press the **B1 button** — the small blue button on the Nucleo board labelled **B1** or **USER**.
 
-This is the only way to play a truly custom recorded sound (a voice clip, a
-sound effect, a short music loop). It is a hardware change so it cannot be done
-by editing code alone.
+What happens when you press it:
+- A brand-new target is placed at a random location
+- The position estimate resets — **wherever you are standing right now becomes the new origin**
+- The servo immediately moves toward the new target
+- Beeping starts again
+
+> **Tip:** Stand still for a moment before pressing B1 so the new round starts cleanly. The position estimate is most accurate right after a reset.
+
+---
+
+## Error Codes
+
+If the board stops and the red LED starts blinking in a repeating pattern, count the blinks:
+
+| Blink pattern | Cause | How to fix |
+|---|---|---|
+| **2 blinks** then 1 second pause, repeating | MPU-6050 sensor not found on I2C | Check that SDA→PB9, SCL→PB8, VCC→3.3V, GND→GND, AD0→GND. Confirm the sensor is not damaged. |
+| **3 blinks** then 1 second pause, repeating | I2C communication failed after 3 retries | Same wiring check as above. Try a shorter/better wire on SDA/SCL. Make sure all grounds are connected. |
+| Fast strobe (continuous rapid flashing) | Fatal hardware init failure | Power-cycle the board. If it persists, check that the board itself is not damaged. |
+
+**Non-fatal warning — 4 amber blinks at startup (once only):**
+The hardware random number generator was unavailable. The game continues normally using a fixed random seed — targets are still random-feeling, just from a predetermined sequence. This is harmless.
+
+---
+
+## Troubleshooting
+
+**The servo points the wrong direction from the very start.**
+Caused by moving during calibration. Power-cycle (unplug/replug USB) and hold the board completely still for the 2-second amber-LED phase.
+
+**The beeping says I'm close but I can't find anything.**
+This is expected behaviour. The position estimate drifts over time (this is a known hardware limitation of dead-reckoning — see note below). Follow the servo direction rather than distance alone. The bearing is reliable; the absolute position is approximate.
+
+**The servo doesn't move at all.**
+Check the wiring on PA6 (Arduino D12). Make sure the servo power (red wire) has 5 V and that the servo's ground wire is connected to the board's GND. If the startup self-test did not show the servo sweeping, the servo was already not working at boot.
+
+**The beeping is very quiet or sounds distorted.**
+Adjust the small trim potentiometer on the STEMMA Speaker board with a small screwdriver. Turn it clockwise to increase volume. Also confirm the speaker is powered from 5 V for full volume.
+
+**The board resets itself when the servo moves.**
+The servo is drawing too much current from the board's 5 V rail. Power the servo from a separate 5 V supply (USB power bank, separate regulator, etc.) while keeping the ground wire connected to the board GND.
+
+**The game starts before I finish holding still.**
+The calibration phase is exactly 2 seconds long. Put the board down on a flat surface before power-on and leave it there until the green LED turns on.
+
+**The target seems to always be in the same general area game after game.**
+This happens when the hardware RNG is unavailable (4 amber blinks at startup). The game is using a fixed seed and will produce the same sequence of targets every time. This is harmless but predictable.
+
+> **On position drift:** The board estimates its position by measuring acceleration and integrating it twice to get distance. This technique (dead-reckoning) accumulates errors quickly — expect a few feet of error after 30–60 seconds of walking. The servo direction (bearing) does not have this problem because it uses the gyroscope, which is much more accurate. After several minutes of play the position estimate may be significantly off, but the servo will still point you roughly in the right direction. Starting a new round with B1 resets the estimate.
+
+---
+
+## Demo Script — Showing It To Someone
+
+Here is a script for demonstrating the game to someone who has never seen it. The whole demo takes about 3 minutes.
+
+**Setup (before they arrive):**
+1. Power on the board and hold it still through calibration
+2. Let the game start — wait until the green LED is on and beeping begins
+3. Stand at the starting point
+
+**Script:**
+
+*"This is a navigation game running on a bare-metal microcontroller — no phone, no GPS, no Wi-Fi. Somewhere in this room, an invisible target has been placed at a random location. The board doesn't know where it is — it figures out where I'VE been by measuring the acceleration of my every step."*
+
+[Hold up the board]
+
+*"The servo arm is my compass — it points toward the target relative to whichever way I'm facing. Watch what happens when I turn."*
+
+[Slowly rotate in place — the servo visibly tracks the direction of the target]
+
+*"The speaker is my Geiger counter. Right now it's beeping slowly — I'm far away."*
+
+[Start walking toward the target — the beeping speeds up and rises in pitch]
+
+*"Hear that? Getting faster, getting higher. I'm getting close."*
+
+[Get within a few feet — rapid beeping, amber LED solid]
+
+*"The amber light means burning hot."*
+
+[Find the target — win jingle, servo waggle, LED flash]
+
+*"There it is. The servo just celebrated."*
+
+[Press B1]
+
+*"And just like that, a new target appears somewhere else. Every game is different because the target is placed using the chip's hardware random number generator."*
+
+---
+
+## Tips for Your Best Score
+
+- **Slow down near the target.** When the beeps are rapid, take small careful steps. The win radius is only one foot — you can walk right through it at full pace.
+
+- **Do a slow spin when you feel lost.** Stand still and turn in a full circle, watching the servo. It will sweep from one side to the other as you rotate through the target direction — the centre point of that sweep is where the target is.
+
+- **Keep the board flat.** The sensor assumes gravity is pointing straight down. Tilting the board more than about 30° confuses the tilt estimate and can skew the bearing calculation.
+
+- **Short games are more accurate than long ones.** The position estimate drifts with time and distance walked. If you cannot find the target after a few minutes, press B1 to reset with a fresh start.
+
+- **If the servo is pegged hard left or right:** the target is somewhere behind you. Do a 180° turn.
+
+---
+
+## Custom Victory Sound
+
+The board generates audio as a square-wave tone — the same way 1980s video game consoles made sound. It cannot play MP3s or WAV files, but you can change the melody.
+
+**To change the win jingle**, edit the `notes[]` array in `Core/Src/audio.c` inside `Audio_WinJingle()`. Each number is a frequency in Hz.
+
+```c
+static const uint32_t notes[] = { 523U, 659U, 784U, 1047U };
+//                                  C5    E5    G5    C6
+```
+
+Note frequency reference:
+
+| | C | D | E | F | G | A | B |
+|---|---|---|---|---|---|---|---|
+| **Octave 4** | 262 | 294 | 330 | 349 | 392 | 440 | 494 |
+| **Octave 5** | 523 | 587 | 659 | 698 | 784 | 880 | 988 |
+| **Octave 6** | 1047 | 1175 | 1319 | 1397 | 1568 | 1760 | 1976 |
+
+`0` = silence/rest. Each note plays for 150 ms; the last one is held for 300 ms.
+
+For a note-by-note rhythm table with custom durations, see [`HOW_IT_WORKS.md`](HOW_IT_WORKS.md) — Custom Victory Sound → Option 2.
+
+For true sampled audio (voice clips, recorded sounds), the chip has a built-in 12-bit DAC that could play PCM audio from flash memory, but this requires rewiring and significant new firmware. See Option 3 in [`HOW_IT_WORKS.md`](HOW_IT_WORKS.md).

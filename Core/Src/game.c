@@ -72,6 +72,28 @@ static int button_pressed(void)
     return 0;
 }
 
+/* Hardware self-test + startup show: LED chase, servo sweep, boot tone.
+ * Proves every actuator is alive before calibration begins. ~2 s total. */
+static void startup_demo(void)
+{
+    /* LED chase: green -> amber -> red -> all off -> all flash */
+    LED_Set(LED_GREEN, 1); HAL_Delay(150);
+    LED_Set(LED_AMBER, 1); HAL_Delay(150);
+    LED_Set(LED_RED,   1); HAL_Delay(150);
+    LED_Off(LED_ALL);      HAL_Delay(100);
+    LED_Set(LED_ALL, 1);   HAL_Delay(100);
+    LED_Off(LED_ALL);
+
+    /* Servo sweep: centre -> hard left -> hard right -> centre */
+    Servo_SetPulseUs(s_servo, SERVO_PULSE_MID_US); HAL_Delay(200);
+    Servo_SetPulseUs(s_servo, SERVO_PULSE_MIN_US); HAL_Delay(350);
+    Servo_SetPulseUs(s_servo, SERVO_PULSE_MAX_US); HAL_Delay(350);
+    Servo_SetPulseUs(s_servo, SERVO_PULSE_MID_US); HAL_Delay(200);
+
+    /* 3-note boot jingle */
+    Audio_BootTone(s_audio);
+}
+
 /* Non-fatal warning: blink amber N times once, then continue. */
 static void warn_blink(uint8_t blink_code)
 {
@@ -163,6 +185,13 @@ static void do_win(void)
         SerialLog_Print(">>> TARGET REACHED - YOU WIN! <<<\r\n");
         Audio_WinJingle(s_audio);
 
+        /* Servo waggle: celebrate with 3 left-right sweeps. */
+        for (int i = 0; i < 3; i++) {
+            Servo_SetPulseUs(s_servo, SERVO_PULSE_MID_US - 400U); HAL_Delay(130);
+            Servo_SetPulseUs(s_servo, SERVO_PULSE_MID_US + 400U); HAL_Delay(130);
+        }
+        Servo_SetPulseUs(s_servo, SERVO_PULSE_MID_US);
+
         for (int i = 0; i < 6; i++) { LED_Toggle(LED_ALL); HAL_Delay(120); }
         LED_Off(LED_ALL);
         LED_Set(LED_GREEN, 1);
@@ -224,6 +253,9 @@ void Game_Init(I2C_HandleTypeDef *hi2c,
         SerialLog_Print("RNG: hardware unavailable - using fixed seed.\r\n");
         warn_blink(4);   /* non-fatal warning code */
     }
+
+    /* Hardware self-test: sweep servo, chase LEDs, play boot tone. */
+    startup_demo();
 
     s_state = STATE_CALIBRATE;
 }

@@ -92,3 +92,15 @@ void Audio_WinJingle(TIM_HandleTypeDef *htim)
     HAL_Delay(300);
     Audio_Off(htim);
 }
+
+void Audio_BootTone(TIM_HandleTypeDef *htim)
+{
+    /* G4 -> C5 -> E5 startup signature: short, distinct from the win jingle. */
+    static const uint32_t notes[] = { 392U, 523U, 659U };
+    for (uint32_t i = 0; i < (sizeof notes / sizeof notes[0]); i++) {
+        Audio_SetTone(htim, notes[i]);
+        HAL_Delay(80);
+        Audio_Off(htim);
+        HAL_Delay(25);
+    }
+}

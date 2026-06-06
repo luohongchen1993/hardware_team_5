@@ -28,4 +28,7 @@ AudioCue Audio_Update(TIM_HandleTypeDef *htim, float distance_m);
 /* Blocking ascending victory arpeggio (used once on win, when motion stops). */
 void Audio_WinJingle(TIM_HandleTypeDef *htim);
 
+/* Short 3-note power-on signature played during the startup self-test. */
+void Audio_BootTone(TIM_HandleTypeDef *htim);
+
 #endif /* AUDIO_H */
