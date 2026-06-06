@@ -1,14 +1,16 @@
+/* led.c — Thin GPIO abstraction for the three status LEDs.
+ * GPIO clocks and pin modes are configured in MX_GPIO_Init() (main.c). */
+
 #include "led.h"
 #include "config.h"
 #include "stm32g4xx_hal.h"
 
 void LED_Init(void)
 {
-    /* GPIO clocks assumed enabled by CubeMX / MX_GPIO_Init().
-     * Ensure all LEDs start off. */
-    HAL_GPIO_WritePin(LED_GREEN_PORT, LED_GREEN_PIN,  GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_AMBER_PORT, LED_AMBER_PIN,  GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LED_RED_PORT,   LED_RED_PIN,    GPIO_PIN_RESET);
+    /* Start with all LEDs off. */
+    HAL_GPIO_WritePin(LED_GREEN_PORT, LED_GREEN_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_AMBER_PORT, LED_AMBER_PIN, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED_RED_PORT,   LED_RED_PIN,   GPIO_PIN_RESET);
 }
 
 void LED_Set(uint8_t mask, uint8_t on)

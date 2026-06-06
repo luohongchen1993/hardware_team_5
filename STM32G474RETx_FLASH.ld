@@ -2,7 +2,7 @@
 ENTRY(Reset_Handler)
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
-_Min_Heap_Size  = 0x200;
+_Min_Heap_Size  = 0x200;   /* required by newlib (sbrk); snprintf needs a little */
 _Min_Stack_Size = 0x400;
 
 MEMORY
@@ -102,8 +102,6 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
-
-  /DISCARD/ : { libc.a ( * ) libm.a ( * ) libgcc.a ( * ) }
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }

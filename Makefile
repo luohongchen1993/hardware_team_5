@@ -1,32 +1,41 @@
 ##########################################################
-# Makefile for STM32G474RE — Health Monitor Firmware
-# Toolchain: arm-none-eabi-gcc
-# Adjust CUBE_HAL_DIR to point at your STM32CubeG4 HAL root
+# Makefile for STM32G474RE — Navigation Game firmware
+# Toolchain: arm-none-eabi-gcc (Arm GNU Toolchain)
+#
+# This builds the application sources against the STM32CubeG4
+# HAL/CMSIS package. Point CUBE_HAL_DIR at your install, e.g.:
+#   make CUBE_HAL_DIR=/c/Users/you/STM32Cube/Repository/STM32Cube_FW_G4_V1.5.0
+# (See CLAUDE.md "Build & flash" for the one-time HAL setup.)
 ##########################################################
 
-TARGET   = health_monitor
+TARGET   = navgame
 BUILD    = build
 CUBE_HAL_DIR ?= $(HOME)/STM32Cube/Repository/STM32Cube_FW_G4_V1.5.0
 
 ######################################
-# Sources
+# Application sources
 ######################################
 C_SOURCES  = Core/Src/main.c
 C_SOURCES += Core/Src/mpu6050.c
-C_SOURCES += Core/Src/distance_sensor.c
-C_SOURCES += Core/Src/temp_sensor.c
 C_SOURCES += Core/Src/servo.c
+C_SOURCES += Core/Src/audio.c
+C_SOURCES += Core/Src/navigation.c
+C_SOURCES += Core/Src/game.c
 C_SOURCES += Core/Src/led.c
 C_SOURCES += Core/Src/serial_log.c
-C_SOURCES += Core/Src/health_monitor.c
-C_SOURCES += Core/Src/speaker.c
 
-# HAL driver sources (subset — add more as needed)
+# CMSIS system file (provides SystemInit / SystemCoreClock)
+C_SOURCES += $(CUBE_HAL_DIR)/Drivers/CMSIS/Device/ST/STM32G4xx/Source/Templates/system_stm32g4xx.c
+
+######################################
+# HAL driver sources (only what we use)
+######################################
 HAL_SRC = $(CUBE_HAL_DIR)/Drivers/STM32G4xx_HAL_Driver/Src
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_rcc.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_rcc_ex.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_cortex.c
+C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_pwr_ex.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_gpio.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_i2c.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_i2c_ex.c
@@ -34,10 +43,11 @@ C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_uart.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_uart_ex.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_tim.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_tim_ex.c
-C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_dac.c
-C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_dac_ex.c
+C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_rng.c
 
-# Startup file (adjust path for your Cube install)
+######################################
+# Startup (assembly)
+######################################
 ASM_SOURCES = \
   $(CUBE_HAL_DIR)/Drivers/CMSIS/Device/ST/STM32G4xx/Source/Templates/gcc/startup_stm32g474xx.s
 
@@ -65,7 +75,7 @@ CP     = $(PREFIX)objcopy
 SZ     = $(PREFIX)size
 
 ######################################
-# Compiler flags
+# Flags
 ######################################
 CPU   = -mcpu=cortex-m4
 FPU   = -mfpu=fpv4-sp-d16
@@ -74,12 +84,13 @@ MCU   = $(CPU) -mthumb $(FPU) $(FLOAT)
 
 OPT   = -O2
 CFLAGS  = $(MCU) $(OPT) -Wall -Wextra -fdata-sections -ffunction-sections \
-          -std=c11 $(C_DEFS) $(C_INCLUDES) -MMD -MP
+          -std=gnu11 $(C_DEFS) $(C_INCLUDES) -MMD -MP
 ASFLAGS = $(MCU) -Wall
 
 LDSCRIPT = STM32G474RETx_FLASH.ld
 LIBS     = -lc -lm -lnosys
-LDFLAGS  = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBS) \
+# -u _printf_float: enable %f in newlib-nano printf/snprintf (telemetry needs it)
+LDFLAGS  = $(MCU) -specs=nano.specs -specs=nosys.specs -u _printf_float -T$(LDSCRIPT) $(LIBS) \
            -Wl,-Map=$(BUILD)/$(TARGET).map,--cref -Wl,--gc-sections
 
 ######################################
@@ -91,8 +102,8 @@ OBJECTS += $(addprefix $(BUILD)/,$(notdir $(ASM_SOURCES:.s=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
 vpath %.s $(sort $(dir $(ASM_SOURCES)))
 
-all: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).bin
-	$(SZ) $<
+all: $(BUILD)/$(TARGET).elf $(BUILD)/$(TARGET).bin $(BUILD)/$(TARGET).hex
+	$(SZ) $(BUILD)/$(TARGET).elf
 
 $(BUILD)/%.o: %.c | $(BUILD)
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -106,15 +117,20 @@ $(BUILD)/$(TARGET).elf: $(OBJECTS)
 $(BUILD)/$(TARGET).bin: $(BUILD)/$(TARGET).elf
 	$(CP) -O binary -S $< $@
 
+$(BUILD)/$(TARGET).hex: $(BUILD)/$(TARGET).elf
+	$(CP) -O ihex $< $@
+
 $(BUILD):
 	mkdir -p $@
 
 clean:
 	rm -rf $(BUILD)
 
-flash: $(BUILD)/$(TARGET).bin
+# Flash via OpenOCD (ST-Link). Alternatively use STM32CubeProgrammer:
+#   STM32_Programmer_CLI -c port=SWD -w build/navgame.elf -rst
+flash: $(BUILD)/$(TARGET).elf
 	openocd -f interface/stlink.cfg -f target/stm32g4x.cfg \
-	  -c "program $(BUILD)/$(TARGET).bin verify reset exit 0x08000000"
+	  -c "program $(BUILD)/$(TARGET).elf verify reset exit"
 
 -include $(wildcard $(BUILD)/*.d)
 
