@@ -24,6 +24,7 @@ typedef struct {
 void          HealthMonitor_Init(I2C_HandleTypeDef *hi2c,
                                  TIM_HandleTypeDef *htim_servo,
                                  TIM_HandleTypeDef *htim_us,
+                                 TIM_HandleTypeDef *htim_spk,
                                  UART_HandleTypeDef *huart);
 void          HealthMonitor_Update(void);
 HealthState_t HealthMonitor_GetState(void);

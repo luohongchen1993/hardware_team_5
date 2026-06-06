@@ -58,6 +58,11 @@
 #define TEMP_SENSOR_PIN             GPIO_PIN_5
 #define TEMP_SENSOR_TIMER           TIM2       /* 1-µs tick for 1-Wire timing */
 
+/* ---- STEMMA Speaker (TIM4 CH1, PB6, AF2) ---- */
+/* PSC=169 → 1 MHz tick; ARR set dynamically per tone frequency */
+#define SPEAKER_GPIO_PORT           GPIOB
+#define SPEAKER_GPIO_PIN            GPIO_PIN_6
+
 /* ---- UART ---- */
 #define LOG_UART_TIMEOUT_MS         10U
 

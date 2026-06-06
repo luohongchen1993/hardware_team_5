@@ -19,6 +19,7 @@ C_SOURCES += Core/Src/servo.c
 C_SOURCES += Core/Src/led.c
 C_SOURCES += Core/Src/serial_log.c
 C_SOURCES += Core/Src/health_monitor.c
+C_SOURCES += Core/Src/speaker.c
 
 # HAL driver sources (subset — add more as needed)
 HAL_SRC = $(CUBE_HAL_DIR)/Drivers/STM32G4xx_HAL_Driver/Src
@@ -33,6 +34,8 @@ C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_uart.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_uart_ex.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_tim.c
 C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_tim_ex.c
+C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_dac.c
+C_SOURCES += $(HAL_SRC)/stm32g4xx_hal_dac_ex.c
 
 # Startup file (adjust path for your Cube install)
 ASM_SOURCES = \

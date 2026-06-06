@@ -6,6 +6,7 @@
 #include "servo.h"
 #include "led.h"
 #include "serial_log.h"
+#include "speaker.h"
 
 static I2C_HandleTypeDef   *s_hi2c;
 static TIM_HandleTypeDef   *s_htim_servo;
@@ -27,6 +28,7 @@ static void enter_nominal(void)
     LED_Off(LED_ALL);
     LED_Set(LED_GREEN, 1);
     Servo_SetAngle(s_htim_servo, 0);
+    Speaker_SetAlarm(STATE_NOMINAL);
 }
 
 static void enter_vibration_warn(void)
@@ -35,6 +37,7 @@ static void enter_vibration_warn(void)
     LED_Off(LED_ALL);
     LED_Set(LED_AMBER, 1);
     Servo_SetAngle(s_htim_servo, 45);
+    Speaker_SetAlarm(STATE_VIBRATION_WARN);
 }
 
 static void enter_thermal_warn(void)
@@ -43,6 +46,7 @@ static void enter_thermal_warn(void)
     LED_Off(LED_ALL);
     LED_Set(LED_AMBER, 1);
     Servo_SetAngle(s_htim_servo, 90);
+    Speaker_SetAlarm(STATE_THERMAL_WARN);
 }
 
 static void enter_safety_breach(void)
@@ -51,6 +55,7 @@ static void enter_safety_breach(void)
     LED_Off(LED_ALL);
     LED_Set(LED_RED, 1);
     Servo_SetAngle(s_htim_servo, 180);
+    Speaker_SetAlarm(STATE_SAFETY_BREACH);
     SerialLog_Print("!!! SAFETY BREACH: GUARD REMOVED !!!\r\n");
 }
 
@@ -60,6 +65,7 @@ static void enter_critical(void)
     s_flash_ts = HAL_GetTick();
     s_sweep_pos = 0;
     s_sweep_dir = 0;
+    Speaker_SetAlarm(STATE_CRITICAL);
     SerialLog_Print("!!! CRITICAL ALARM !!!\r\n");
 }
 
@@ -94,6 +100,7 @@ static void service_critical(void)
 void HealthMonitor_Init(I2C_HandleTypeDef *hi2c,
                         TIM_HandleTypeDef *htim_servo,
                         TIM_HandleTypeDef *htim_us,
+                        TIM_HandleTypeDef *htim_spk,
                         UART_HandleTypeDef *huart)
 {
     s_hi2c       = hi2c;
@@ -111,6 +118,7 @@ void HealthMonitor_Init(I2C_HandleTypeDef *hi2c,
     SerialLog_Init(huart);
     LED_Init();
     Servo_Init(htim_servo);
+    Speaker_Init(htim_spk);
     enter_nominal();
 }
 
@@ -165,6 +173,9 @@ void HealthMonitor_Update(void)
             if ((now - s_clear_ts) >= CLEAR_HOLD_MS) enter_nominal();
         }
     }
+
+    /* --- Speaker pattern tick --- */
+    Speaker_Update();
 
     /* --- Log --- */
     SerialLog_PrintStatus(&s_data);
