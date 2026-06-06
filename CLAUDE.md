@@ -19,8 +19,7 @@ conventions. Read it before writing or changing code; keep it updated when decis
   in history at commit `4837b87`** (and parallel WIP at `7a297b9`). Recover with
   `git checkout 4837b87 -- <path>` if ever needed. Reused from it: the MPU-6050 I2C driver, servo
   PWM mapping, LED abstraction, and the CubeMX-style HAL init.
-- `.claude/` and build artifacts are git-ignored. Co-author commits with
-  `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
+- `.claude/` and build artifacts are git-ignored.
 
 ---
 
