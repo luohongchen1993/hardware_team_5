@@ -52,14 +52,16 @@
 
 /* ---------------------------------------------------------
  * Sensor fusion.
+ * Heading: gyro-Z integration. Position: step dead-reckoning
+ * (pedometer) — one stride per detected step along the heading.
+ * Bounded per-step error, no acceleration-integration drift,
+ * and tilt-independent (uses |accel| magnitude).
  * --------------------------------------------------------- */
-#define COMP_FILTER_ALPHA       0.98f         /* gyro weight in complementary filter */
-
-/* Dead-reckoning noise control + zero-velocity update (ZUPT) */
-#define ACC_DEADBAND_MS2        0.30f         /* ignore tiny horizontal accel (~0.03 g) */
-#define ZUPT_ACCEL_BAND_MS2     0.50f         /* ||a|-g| below this => possibly still */
-#define ZUPT_GYRO_BAND_DPS      3.0f          /* rotation below this => possibly still */
-#define ZUPT_STILL_SAMPLES      10U           /* consecutive still samples => v:=0 */
+#define STRIDE_M                  0.65f   /* metres advanced per detected step (tune to user) */
+#define STEP_ACCEL_THRESH_MS2     1.5f    /* dynamic-accel peak to count a step (~0.15 g) */
+#define STEP_REARM_MS2            0.6f    /* dynamic accel must fall below this to re-arm */
+#define STEP_MIN_INTERVAL_SAMPLES 25U     /* refractory between steps (~250 ms @ 100 Hz) */
+#define STEP_LP_ALPHA             0.02f   /* low-pass factor for the gravity baseline */
 
 /* ---------------------------------------------------------
  * Servo — SG90 class on TIM3 CH1 (PA6).

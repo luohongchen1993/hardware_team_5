@@ -98,37 +98,30 @@ bias is subtracted from every subsequent gyro reading.
 Takes scaled IMU data as input, produces position and heading as output.
 No hardware access — all floating-point math. Called once per 100 Hz tick.
 
-**Orientation (roll, pitch, heading):**
+**Heading (compass direction):**
 
-A *complementary filter* blends two noisy estimates:
-- The accelerometer measures gravity direction → gives roll and pitch, but is
-  noisy when the board is moving.
-- The gyroscope measures rotation rate → gives all three axes by integration,
-  but drifts over time.
+Heading (yaw) is integrated from the gyroscope's Z axis each tick (the zero-rate
+bias is measured and removed during calibration). There is no magnetometer, so
+heading has no absolute reference and drifts slowly over minutes — acceptable for
+a few-minute game.
 
-The filter blends 98% gyro prediction with 2% accelerometer correction each tick.
-This smooths accelerometer noise while slowly correcting gyro drift for roll/pitch.
+**Position — step dead-reckoning (a pedometer):**
 
-Heading (yaw, i.e. compass direction) has no absolute reference — only the gyro
-is used. It will slowly drift. This is the known weak point.
+Rather than double-integrating acceleration (which diverges in seconds on a
+consumer MEMS sensor), the position is built from counted footsteps:
 
-**Position (dead-reckoning):**
+- A slow low-pass of the accelerometer *magnitude* tracks gravity (~9.81 m/s²).
+- The dynamic part (magnitude − baseline) spikes on every footfall.
+- A step is counted when that spike crosses a threshold, with hysteresis (it must
+  fall back down before the next step counts) and a refractory window (~250 ms
+  minimum between steps) so a single footfall is never double-counted.
+- Each counted step advances the position by one stride (`STRIDE_M`, default
+  0.65 m) along the current heading.
 
-- Subtract the gravity component from accelerometer readings (the board is
-  assumed roughly flat).
-- Apply a small deadband (ignore accelerations below 0.03 g) to suppress noise.
-- Rotate the horizontal acceleration from the board frame into the room frame
-  using the heading angle.
-- Integrate twice: acceleration → velocity → position.
-
-The code includes a **ZUPT (Zero-Velocity Update):** if the accelerometer magnitude
-is close to 1g AND the gyro magnitude is small for 10 consecutive samples, the
-board is probably stationary, so velocity is forced to zero. This prevents velocity
-from accumulating noise while the user is standing still.
-
-**Honest caveat (in the source too):** double-integrating a consumer MEMS accelerometer
-diverges in seconds. Expect metres of position error over 10–30 seconds. The heading
-and bearing direction are reliable; the absolute position is approximate.
+Because every step is a bounded, discrete update, position error does **not**
+snowball, and holding the board tilted does not inject phantom motion (magnitude
+is orientation-independent). `STRIDE_M` and `STEP_ACCEL_THRESH_MS2` in `config.h`
+tune stride length and step sensitivity per user/board.
 
 **Distance and bearing:**
 
@@ -205,9 +198,9 @@ within the ±6.1 m grid. It is seeded from the hardware RNG at startup; if the
 hardware RNG is unavailable, a fixed seed (0x00C0FFEE) is used and the amber LED
 blinks 4 times as a non-fatal warning.
 
-**Win replay:** Pressing B1 calls `Nav_Init` to reset the position/velocity/heading
-estimate to zero, reads the current accel to re-seed the tilt estimate, and places a
-new random target. The game immediately resumes SEEKING.
+**Win replay:** Pressing B1 calls `Nav_Init` to reset the position/heading estimate
+to zero, reads the current accel to re-seed the gravity baseline, and places a new
+random target. The game immediately resumes SEEKING.
 
 **Loop pacing:** `Game_Tick()` is called from `main()`'s infinite loop as fast as
 possible. The SEEKING state checks `HAL_GetTick()` and returns early if fewer than

@@ -142,7 +142,7 @@ main()
         ├── STATE_CALIBRATE  — blocking ~2 s, gyro bias average, Nav_Init
         ├── STATE_SEEKING    — 100 Hz:
         │       MPU6050_ReadScaled()
-        │       Nav_Update()          — complementary filter + dead-reckon + ZUPT
+        │       Nav_Update()          — gyro heading + step-detection dead-reckoning
         │       Servo_PointBearing()  — relative bearing → TIM3 CCR
         │       Audio_Update()        — proximity → pitch + cadence → TIM2 ARR/CCR
         │       LED_Set()
@@ -159,7 +159,7 @@ main()
 | `main.c` | Clock tree (170 MHz PLL), peripheral init, super-loop |
 | `config.h` | Every tunable constant — no magic numbers anywhere else |
 | `mpu6050.c/.h` | I2C driver: init, burst read, scaling, calibration, bus recovery |
-| `navigation.c/.h` | Complementary filter, dead-reckoning, ZUPT, distance/bearing (pure math) |
+| `navigation.c/.h` | Gyro heading + step-detection dead-reckoning (pedometer), distance/bearing (pure math) |
 | `servo.c/.h` | PWM pulse → angle → relative bearing on TIM3 CH1 |
 | `audio.c/.h` | Proximity → pitch + beep cadence on TIM2 CH1; win jingle |
 | `game.c/.h` | State machine, xorshift32 PRNG, target placement, win detection |
@@ -213,11 +213,11 @@ Both pitch and beep speed increase continuously as you close in. The table below
 
 ## Sensor Fusion Overview
 
-**Orientation** uses a complementary filter: 98% weight on the gyroscope (low noise, drifts slowly) blended with 2% from the accelerometer gravity vector (absolute roll/pitch reference, noisy during motion). Heading (yaw) is gyro-only — no magnetometer.
+**Heading (yaw)** is integrated from the gyroscope's Z axis, with the zero-rate bias measured and removed during the 2-second calibration. It is gyro-only (no magnetometer), so it drifts slowly over minutes.
 
-**Position** is dead-reckoning: horizontal body-frame acceleration is rotated to world frame by the heading angle, then double-integrated. A **ZUPT (Zero-Velocity Update)** forces velocity to zero whenever the board appears stationary (|acceleration| ≈ 1g and |rotation| ≈ 0 for 10 consecutive samples).
+**Position** uses **step dead-reckoning (a pedometer)**, not acceleration double-integration. A slow low-pass of the accelerometer magnitude tracks gravity; each footfall makes the dynamic part spike, which is counted as a step (with hysteresis and a refractory window so one footfall counts once). Every step advances the position by one stride (`STRIDE_M`, default 0.65 m) along the current heading. Because each step is a bounded, discrete update, error does not snowball, and tilting the board does not inject phantom motion (magnitude is orientation-independent).
 
-> **Known limitation:** Consumer-grade MEMS accelerometers accumulate noise rapidly when double-integrated. Expect several feet of position error after 30–60 seconds of continuous motion. The bearing direction is reliable; absolute XY coordinates are approximate. This is inherent to dead-reckoning — a UWB or optical positioning reference would be needed for centimetre accuracy.
+> **Notes & tuning:** `STRIDE_M` and `STEP_ACCEL_THRESH_MS2` (in `config.h`) may need a small tweak per user/board — raise the threshold if it counts phantom steps, lower it if it misses real ones. Heading still drifts slowly (gyro-only); for a few-minute game this is fine. Survey-grade absolute position would need a magnetometer (heading) plus a UWB/optical reference (position).
 
 ---
 

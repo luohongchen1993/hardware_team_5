@@ -159,9 +159,18 @@ static void do_seek(void)
     /* Proximity audio cue. */
     AudioCue cue = Audio_Update(s_audio, s_nav.distance_m);
 
-    /* LEDs: green = seeking, amber pulses when the target is near. */
+    /* LEDs: green = seeking. Amber mirrors proximity:
+     *   very near -> solid on   ("burning"),
+     *   near      -> ~4 Hz pulse ("hot"),
+     *   else      -> off. */
     LED_Set(LED_GREEN, 1);
-    LED_Set(LED_AMBER, (cue >= AUDIO_CUE_NEAR) ? 1 : 0);
+    if (cue >= AUDIO_CUE_VERY_NEAR) {
+        LED_Set(LED_AMBER, 1);
+    } else if (cue >= AUDIO_CUE_NEAR) {
+        LED_Set(LED_AMBER, (uint8_t)((HAL_GetTick() / 125U) & 1U));
+    } else {
+        LED_Set(LED_AMBER, 0);
+    }
 
     /* Throttled telemetry. */
     if (++s_tele_ctr >= TELEMETRY_EVERY_TICKS) {

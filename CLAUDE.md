@@ -31,9 +31,10 @@ conventions. Read it before writing or changing code; keep it updated when decis
    no code change. (This is the larger STEMMA connector, NOT the I2C "STEMMA QT" variant.)
 2. **MPU-6050 I2C address 0x68** (AD0 low). Change `MPU6050_I2C_ADDR` in `config.h` for 0x69.
 3. **2D navigation** in the horizontal X-Y plane; target at z=0; servo points a horizontal bearing.
-4. **Dead-reckoning position drifts** (consumer MEMS double-integration). Bounded by ZUPT but
-   approximate. Heading/bearing is reliable. An external position reference (UWB/optical/encoder)
-   would be needed for real accuracy — out of scope for v1.
+4. **Position = step dead-reckoning (pedometer).** Each detected footfall advances one stride
+   (`STRIDE_M`) along the gyro heading — bounded per-step error, no acceleration-integration
+   drift, and tilt-independent. Tune `STRIDE_M` / `STEP_ACCEL_THRESH_MS2` in `config.h` per user.
+   Heading is gyro-only (no magnetometer) so it drifts slowly; fine for a few-minute game.
 5. **I2C `Timing = 0x00702991`** is a CubeMX-derived constant (PCLK1 source). If the IMU fails to
    init (red LED, 2 blinks), regenerate `TIMINGR` in CubeMX for the actual I2C kernel clock.
 6. **Servo / heading sign**: if the servo points away from the target, flip `SERVO_BEARING_SIGN`
@@ -113,7 +114,7 @@ Core/Inc, Core/Src:
   main.c        HAL init (clock/I2C1/TIM2/TIM3/USART2/RNG/GPIO) + 100 Hz super-loop
   config.h      ALL tunables: rates, thresholds, grid, filter, audio, pins
   mpu6050.*     I2C driver: WHO_AM_I, init, raw int16 read, scaled SI read, gyro calibrate
-  navigation.*  complementary filter + dead-reckon + ZUPT + distance/bearing (pure math)
+  navigation.*  gyro-heading + step-detection dead-reckoning (pedometer) + distance/bearing (pure math)
   servo.*       pulse-µs / angle / point-relative-bearing on TIM3_CH1
   audio.*       proximity → pitch + beep cadence on TIM2_CH1; win jingle
   game.*        state machine, PRNG (xorshift32), target placement, win detection
@@ -135,9 +136,9 @@ typedef struct { int16_t ax,ay,az, temp, gx,gy,gz; } MPU6050_Raw;   // raw two's
 typedef struct { float ax,ay,az;  float gx,gy,gz; } MPU6050_Scaled; // m/s^2, deg/s
 typedef struct { float gx,gy,gz; } MPU6050_Bias;                    // gyro zero-rate (deg/s)
 
-typedef struct {                 // navigation outputs (+ integrator internals)
-    Coordinate pos; float vel_x,vel_y; float heading_deg, roll_deg, pitch_deg;
-    float distance_m, bearing_deg; uint32_t still_count;
+typedef struct {                 // navigation outputs (+ step-detector internals)
+    Coordinate pos; float heading_deg, distance_m, bearing_deg; uint32_t steps;
+    float acc_lp; uint16_t since_step; uint8_t step_armed;     // step detector
 } NavState;
 ```
 
@@ -165,11 +166,13 @@ spec's ±250 so brisk handheld turns don't saturate; resolution still ~0.015 °/
 
 ## Navigation / sensor fusion
 
-- **Orientation:** complementary filter — roll/pitch from accel gravity vector, yaw from gyro Z
-  integration. `angle = α(angle + ω·dt) + (1−α)·accel_angle`, α=0.98.
-- **Displacement (demo-grade):** rotate body horizontal accel to world frame by heading, integrate
-  twice; **ZUPT** zeroes velocity when |a|≈g and |ω|≈0. Flat-board assumption; metres of drift
-  expected — see assumption #4.
+- **Heading:** yaw integrated from gyro Z (bias removed at calibration). Gyro-only, no
+  magnetometer, so it drifts slowly over minutes.
+- **Position (pedometer dead-reckoning):** detect each walking step from the accelerometer
+  magnitude (a slow low-pass tracks gravity; the dynamic part peaks per footfall, counted with
+  hysteresis + a refractory window), then advance `STRIDE_M` along the heading. Each step is a
+  bounded, discrete update — no acceleration double-integration, so error doesn't snowball, and
+  board tilt doesn't inject phantom motion (|accel| is orientation-independent).
 - **Distance:** `sqrtf(dx²+dy²)`. **Bearing:** `atan2f(dy,dx)`→[0,360). Servo shows
   `wrap(bearing−heading)` clamped to ±90° (centre = on target).
 
@@ -196,8 +199,8 @@ Every per-cycle op is **O(1) time, O(1) space** — no loops over data, no alloc
 | Step | Est. cost |
 |---|---|
 | I2C burst read 14 B | ~0.4 ms (dominant) |
-| scale + complementary filter | < 20 µs |
-| dead-reckon + ZUPT | < 10 µs |
+| scale + heading integrate | < 10 µs |
+| step detection + stride update | < 10 µs |
 | distance/bearing (`sqrtf`,`atan2f` on FPU) | < 15 µs |
 | servo + audio register writes | < 10 µs |
 | **total compute** | **< 0.5 ms** → ~95% idle headroom |
