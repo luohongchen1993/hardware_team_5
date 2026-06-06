@@ -48,7 +48,7 @@
  * each cardinal direction; win when within ~1 ft (0.3048 m).
  * --------------------------------------------------------- */
 #define GRID_HALF_EXTENT_M      6.096f        /* +/-20 ft per axis (X,Y) */
-#define WIN_RADIUS_M            0.3048f       /* ~1 ft win threshold (configurable) */
+#define WIN_RADIUS_M            0.1524f       /* ~6 in (15 cm) win threshold (configurable) */
 
 /* ---------------------------------------------------------
  * Sensor fusion.

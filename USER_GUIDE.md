@@ -11,7 +11,7 @@ The board gives you two clues:
 - **A servo arm** that physically rotates to point toward the target — like a compass needle. When it points straight ahead, walk forward. When it swings left, turn left.
 - **A speaker** that beeps faster and higher as you get closer — like a Geiger counter near radiation. Slow low thumps = cold. Rapid high-pitched chirps = burning hot.
 
-Get within one foot of the target and you win. A victory jingle plays, the board celebrates, you press a button, and a new target appears.
+Get within six inches of the target and you win. A victory jingle plays, the board celebrates, you press a button, and a new target appears.
 
 That's it. Walk toward the beeping.
 
@@ -124,7 +124,7 @@ Every beep is a single short tone. The pitch and the speed both increase as you 
 | Faster, slightly higher tones | Warm | 14–22 ft away | Off |
 | Noticeably quick, clearly higher pitch | Hot | 5–14 ft away | **Pulsing** |
 | Rapid high-pitched chirps | Burning | 1–5 ft away | **Solid on** |
-| You stop and the jingle plays | **WIN** | < 1 ft away | Solid |
+| You stop and the jingle plays | **WIN** | < 6 in away | Solid |
 
 **The pitch and speed change continuously** — there are no sudden jumps. As you step toward the target you should hear the tone rising and the cadence quickening at the same time.
 
@@ -136,7 +136,7 @@ The servo direction is more reliable than the absolute position estimate. If the
 
 ## Step 4 — Winning
 
-When you get within about **one foot (30 cm)** of the target location:
+When you get within about **six inches (15 cm)** of the target location:
 
 1. Servo centres and holds still
 2. Beeping stops
@@ -253,7 +253,7 @@ Here is a script for demonstrating the game to someone who has never seen it. Th
 
 ## Tips for Your Best Score
 
-- **Slow down near the target.** When the beeps are rapid, take small careful steps. The win radius is only one foot — you can walk right through it at full pace.
+- **Slow down near the target.** When the beeps are rapid, take small careful steps. The win radius is only six inches — you can walk right through it at full pace.
 
 - **Do a slow spin when you feel lost.** Stand still and turn in a full circle, watching the servo. It will sweep from one side to the other as you rotate through the target direction — the centre point of that sweep is where the target is.
 

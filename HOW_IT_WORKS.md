@@ -24,7 +24,7 @@ Power on
        Read IMU → update position estimate
        → point servo toward target
        → beep faster/louder as distance shrinks
-       → win when within ~1 ft
+       → win when within ~6 in (15 cm)
   → Win jingle, servo centres, press B1 to play again
 ```
 
@@ -63,7 +63,7 @@ Key constants:
 |---|---|---|
 | `LOOP_HZ` | 100 | How many times per second the game updates |
 | `GRID_HALF_EXTENT_M` | 6.1 m (~20 ft) | How far away targets can be placed |
-| `WIN_RADIUS_M` | 0.3 m (~1 ft) | How close to win |
+| `WIN_RADIUS_M` | 0.15 m (~6 in) | How close to win |
 | `COMP_FILTER_ALPHA` | 0.98 | How much the gyro dominates orientation (vs accel) |
 | `CALIB_SAMPLES` | 400 | How many samples to average at startup for bias |
 | `AUDIO_FREQ_FAR/NEAR_HZ` | 300 / 2000 Hz | Pitch range for the proximity beep |
@@ -160,7 +160,7 @@ The compare register is always set to half the period (50% duty cycle), producin
 a clean square wave.
 
 A **proximity value p** is computed each tick: 0.0 when at the edge of the 9m
-sensing range, 1.0 when at the 0.3 m win threshold.
+sensing range, 1.0 when at the 0.15 m win threshold.
 
 - **Pitch** scales linearly from 300 Hz (far) to 2000 Hz (close).
 - **Beep cadence** scales from one beep every 800 ms (far) to one beep every
