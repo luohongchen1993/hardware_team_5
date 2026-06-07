@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seb-Lite Wiring and Mechanics - Standalone</title>
+  <style>
+:root {
+  color-scheme: light;
+  --ink: #18212b;
+  --muted: #66717e;
+  --line: #d9e0e7;
+  --paper: #f7f8f5;
+  --panel: #ffffff;
+  --green: #1d8f63;
+  --red: #b53a31;
+  --blue: #2b67ad;
+  --amber: #a66c10;
+  --shadow: 0 18px 45px rgba(24, 33, 43, 0.09);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    linear-gradient(90deg, rgba(24,33,43,0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(24,33,43,0.035) 1px, transparent 1px),
+    var(--paper);
+  background-size: 32px 32px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  cursor: pointer;
+}
+
+a { color: inherit; }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+  padding: 28px clamp(18px, 4vw, 48px) 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(12px);
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--blue);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-weight: 800;
+}
+
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: 0; font-size: clamp(26px, 4vw, 44px); line-height: 1.02; }
+h2 { margin-bottom: 12px; font-size: 20px; }
+h3 { margin-bottom: 8px; font-size: 16px; }
+small, .muted { color: var(--muted); }
+
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.status-strip span, .status-strip a, .badge {
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 18px;
+  padding: 18px clamp(18px, 4vw, 48px) 36px;
+}
+
+.sidebar, .workspace { min-width: 0; }
+
+.panel, .run-card, .task-card, .verify-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.panel { padding: 16px; margin-bottom: 18px; }
+
+.agent {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 10px;
+  text-align: left;
+  align-items: center;
+  padding: 11px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.agent.active { border-color: var(--blue); background: #f1f6fb; }
+.agent b, .agent small { display: block; }
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.dot.live { background: var(--green); box-shadow: 0 0 0 4px rgba(29,143,99,.12); }
+.dot.queued { background: var(--amber); }
+
+.doc-list { display: grid; gap: 8px; }
+.doc {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+.doc b { display: block; font-size: 14px; }
+.doc small { display: block; margin-top: 4px; line-height: 1.35; }
+
+.workspace { display: grid; gap: 14px; }
+
+.board-band {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.35fr) minmax(280px, .65fr);
+  gap: 14px;
+}
+
+.board-visual {
+  position: relative;
+  min-height: 310px;
+  border: 1px solid #bfc9d2;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(43,103,173,.16), transparent 22%),
+    linear-gradient(135deg, #27313d, #52616d);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.board-visual::before,
+.board-visual::after {
+  content: "";
+  position: absolute;
+  top: 34px;
+  bottom: 34px;
+  width: 42px;
+  border: 1px solid rgba(255,255,255,.2);
+  background: repeating-linear-gradient(180deg, #f4d06f 0 9px, #303945 9px 15px);
+}
+.board-visual::before { left: 22px; }
+.board-visual::after { right: 22px; }
+
+.usb, .chip, .pin {
+  position: absolute;
+  border: 1px solid rgba(255,255,255,.36);
+  color: #fff;
+  background: rgba(255,255,255,.12);
+}
+
+.usb {
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 6px;
+}
+
+.chip {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  min-height: 112px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border-radius: 6px;
+  background: #151b22;
+  line-height: 1.4;
+}
+
+.pin {
+  padding: 6px 9px;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.left { left: 76px; }
+.right { right: 76px; }
+.p1 { top: 72px; } .p2 { top: 112px; } .p3 { top: 152px; }
+.p4 { top: 92px; } .p5 { top: 132px; } .p6 { top: 172px; }
+
+.run-card { padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+.file-link {
+  display: inline-flex;
+  width: fit-content;
+  margin: 8px 0 18px;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 750;
+  text-decoration: none;
+}
+.file-link:hover { text-decoration: underline; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions button, .tab {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 7px;
+}
+.primary { background: var(--ink); color: white; border-color: var(--ink); }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+.tab.active { border-color: var(--blue); color: var(--blue); background: #f1f6fb; font-weight: 750; }
+
+.tabpane { display: none; }
+.tabpane.active { display: block; }
+
+.task-grid, .verify-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.task-card, .verify-card { padding: 16px; min-height: 150px; }
+.task-card ul, .verify-card ul { padding-left: 18px; margin: 10px 0 0; color: var(--muted); }
+.task-card li, .verify-card li { margin-bottom: 6px; }
+
+.code-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.code-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+#codeFileLink {
+  color: var(--blue);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+pre {
+  margin: 0;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #111820;
+  color: #d9f2e6;
+  padding: 16px;
+  line-height: 1.5;
+  min-height: 380px;
+}
+
+.terminal {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #242b34;
+  color: #dbe5ed;
+  padding: 10px 12px;
+}
+.terminal-bar span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #e0705f;
+}
+.terminal-bar span:nth-child(2) { background: #e7bd55; }
+.terminal-bar span:nth-child(3) { background: #69b77a; }
+.terminal-bar b { margin-left: 8px; font-size: 13px; }
+
+@media (max-width: 980px) {
+  .topbar, .shell, .board-band { grid-template-columns: 1fr; }
+  .topbar { align-items: start; }
+  .shell { display: block; }
+  .sidebar { margin-bottom: 18px; }
+}
+
+@media (max-width: 640px) {
+  .status-strip { justify-content: flex-start; }
+  .task-grid, .verify-grid { grid-template-columns: 1fr; }
+  .code-head { align-items: start; flex-direction: column; }
+  .code-meta { justify-content: flex-start; }
+  .board-visual { min-height: 260px; }
+  .pin { font-size: 11px; max-width: 112px; white-space: normal; }
+  .left { left: 64px; }
+  .right { right: 64px; }
+  .chip { width: 140px; }
+}
+
+
+.wiring-page {
+  display: grid;
+  gap: 18px;
+  padding: 18px clamp(18px, 4vw, 48px) 42px;
+}
+
+.hero-explain,
+.story-scene,
+.proximity-map,
+.wire-layout,
+.mechanic-card,
+.pin-table-section,
+.clinical-section,
+.talk-track {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.hero-explain {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(280px, .8fr);
+  gap: 22px;
+  align-items: end;
+  padding: 22px;
+}
+
+.hero-explain h2 {
+  max-width: 780px;
+  margin-bottom: 0;
+  font-size: clamp(24px, 3.5vw, 40px);
+  line-height: 1.08;
+}
+
+.hero-explain p:last-child {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.story-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.story-scene {
+  padding: 18px;
+  min-height: 360px;
+  overflow: hidden;
+}
+
+.story-scene h2 {
+  font-size: 24px;
+  line-height: 1.12;
+}
+
+.story-scene p:last-child {
+  color: var(--muted);
+  line-height: 1.52;
+  margin-bottom: 0;
+}
+
+.scene-art {
+  position: relative;
+  height: 150px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(24,33,43,.045) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(24,33,43,.045) 1px, transparent 1px),
+    #f9fbfc;
+  background-size: 24px 24px;
+}
+
+.motion-ring {
+  position: absolute;
+  left: 92px;
+  top: 42px;
+  border: 5px solid #2b67ad;
+  border-radius: 50%;
+  opacity: .8;
+}
+.r1 { width: 58px; height: 58px; }
+.r2 { width: 94px; height: 94px; left: 74px; top: 24px; opacity: .28; }
+.r3 { width: 128px; height: 128px; left: 57px; top: 7px; opacity: .14; }
+
+.motion-dot {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1d8f63;
+  box-shadow: 0 0 0 8px rgba(29,143,99,.12);
+}
+.d1 { left: 210px; top: 36px; }
+.d2 { left: 248px; top: 68px; background: #a66c10; }
+.d3 { left: 288px; top: 104px; background: #b53a31; }
+
+.brain-art {
+  display: grid;
+  place-items: center;
+}
+
+.brain-chip {
+  width: 112px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #18212b;
+  color: #fff;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.code-line {
+  position: absolute;
+  height: 8px;
+  border-radius: 999px;
+  background: #2b67ad;
+}
+.c1 { width: 86px; left: 24px; top: 34px; }
+.c2 { width: 66px; right: 28px; top: 68px; background: #1d8f63; }
+.c3 { width: 112px; left: 36px; bottom: 28px; background: #a66c10; }
+
+.response-art {
+  background: linear-gradient(135deg, #f8fbf9, #fff8ee);
+}
+
+.servo-pointer {
+  position: absolute;
+  left: 38px;
+  top: 42px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 10px solid rgba(43,103,173,.15);
+  background: #fff;
+}
+
+.servo-pointer::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 12px;
+  border-radius: 999px;
+  background: #2b67ad;
+  transform-origin: 6px 50%;
+  transform: translateY(-50%) rotate(-34deg);
+}
+
+.servo-pointer::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #18212b;
+  transform: translate(-50%, -50%);
+}
+
+.speaker-cone {
+  position: absolute;
+  right: 96px;
+  top: 55px;
+  width: 58px;
+  height: 42px;
+  clip-path: polygon(0 25%, 35% 25%, 100% 0, 100% 100%, 35% 75%, 0 75%);
+  background: #18212b;
+}
+
+.sound {
+  position: absolute;
+  border: 4px solid #a66c10;
+  border-left: none;
+  border-radius: 0 50% 50% 0;
+}
+.s1 { right: 70px; top: 58px; width: 22px; height: 36px; }
+.s2 { right: 48px; top: 48px; width: 40px; height: 56px; opacity: .65; }
+.s3 { right: 24px; top: 36px; width: 62px; height: 80px; opacity: .36; }
+
+.proximity-map {
+  display: grid;
+  grid-template-columns: minmax(280px, .7fr) minmax(520px, 1.3fr);
+  gap: 18px;
+  align-items: stretch;
+  padding: 20px;
+}
+
+.map-copy h2 {
+  font-size: clamp(24px, 3.4vw, 38px);
+  line-height: 1.08;
+}
+
+.map-copy p:last-child {
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+.map-visual {
+  position: relative;
+  min-height: 340px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(24,33,43,.045) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(24,33,43,.045) 1px, transparent 1px),
+    #fbfcfd;
+  background-size: 24px 24px;
+}
+
+.position-map {
+  min-height: 430px;
+}
+
+.path-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ideal-path,
+.estimated-path,
+.servo-arrow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ideal-path {
+  stroke: rgba(29,143,99,.45);
+  stroke-width: 10;
+  stroke-dasharray: 14 14;
+}
+
+.estimated-path {
+  stroke: #2b67ad;
+  stroke-width: 6;
+}
+
+.servo-arrow {
+  stroke: #a66c10;
+  stroke-width: 7;
+}
+
+.start-marker,
+.target-marker {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.start-marker {
+  left: 58px;
+  bottom: 44px;
+}
+
+.start-marker::before {
+  content: "";
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #2b67ad;
+  box-shadow: 0 0 0 10px rgba(43,103,173,.12);
+}
+
+.target-marker {
+  right: 46px;
+  top: 34px;
+}
+
+.target-marker span {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #18212b;
+  box-shadow: 0 0 0 12px rgba(24,33,43,.08);
+}
+
+.target-marker b {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.feedback-chip {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.quiet-chip { left: 136px; bottom: 34px; color: #1d8f63; }
+.slow-chip { left: 260px; top: 108px; color: #2b67ad; }
+.fast-chip { right: 210px; top: 58px; color: #a66c10; }
+.solid-chip { right: 82px; bottom: 38px; color: #b53a31; }
+
+.wire-layout {
+  position: relative;
+  min-height: 560px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(24,33,43,.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(24,33,43,.04) 1px, transparent 1px),
+    #ffffff;
+  background-size: 28px 28px;
+}
+
+.diagram-guide {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 20px;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.diagram-guide h2 {
+  margin-bottom: 0;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.08;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.i2c-dot { background: #2b67ad; }
+.pwm-dot { background: #a66c10; }
+.servo-dot { background: #7a4fb0; }
+
+.module {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 14px 30px rgba(24,33,43,.08);
+  padding: 16px;
+}
+
+.node-badge {
+  position: absolute;
+  top: -14px;
+  left: -14px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 850;
+  border: 3px solid #fff;
+  box-shadow: 0 8px 18px rgba(24,33,43,.18);
+}
+.controller-badge { background: var(--ink); }
+.i2c-badge { background: #2b67ad; }
+.pwm-badge { background: #a66c10; }
+.servo-badge { background: #7a4fb0; }
+
+.module h2,
+.module h3 {
+  margin-bottom: 8px;
+}
+
+.wire-rows {
+  display: grid;
+  gap: 6px;
+}
+
+.wire-rows p {
+  display: grid;
+  grid-template-columns: 74px 1fr;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: #fbfcfd;
+  border: 1px solid #edf1f4;
+}
+
+.wire-rows b {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.wire-rows span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.plain-note {
+  margin: 8px 0 0;
+  padding: 9px 10px;
+  border-radius: 7px;
+  border: 1px solid #dbe7ef;
+  background: #f5f9fc;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.42;
+}
+
+.nucleo {
+  left: 50%;
+  top: 52%;
+  width: 330px;
+  transform: translate(-50%, -50%);
+}
+
+.sensor {
+  width: 250px;
+}
+
+.imu { left: 52px; top: 198px; }
+.speaker { right: 56px; top: 365px; }
+.servo { right: 56px; top: 162px; }
+
+.wire-layout .plain-note {
+  font-size: 14px;
+}
+
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.wire {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: .85;
+}
+.wire.i2c { stroke: #2b67ad; }
+.wire.pwm { stroke: #a66c10; }
+.wire.servo-wire { stroke: #7a4fb0; }
+.mechanics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mechanic-card {
+  padding: 18px;
+  min-height: 205px;
+}
+
+.mechanic-card p:last-child {
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.mechanic-card.warning {
+  border-color: rgba(181,58,49,.36);
+  background: #fff8f6;
+}
+
+.pin-table-section {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.clinical-section {
+  display: grid;
+  grid-template-columns: minmax(280px, .8fr) minmax(360px, 1.2fr);
+  gap: 18px;
+  padding: 22px;
+  align-items: center;
+}
+
+.clinical-section h2 {
+  margin-bottom: 0;
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.12;
+}
+
+.clinical-section p:last-child {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--blue);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+td {
+  color: var(--muted);
+}
+
+td:first-child {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.talk-track {
+  padding: 22px;
+}
+
+.talk-track p:last-child {
+  max-width: 980px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+@media (max-width: 1050px) {
+  .hero-explain,
+  .story-board,
+  .proximity-map,
+  .clinical-section,
+  .mechanics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wire-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: 0;
+    padding: 14px;
+  }
+
+  .diagram-guide {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .legend {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .module {
+    position: static;
+    width: auto;
+    transform: none;
+  }
+
+  .wires {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .hero-explain,
+  .story-board,
+  .proximity-map,
+  .clinical-section,
+  .mechanics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .map-visual {
+    min-height: 460px;
+    padding: 14px;
+  }
+
+  .position-map {
+    min-height: 420px;
+  }
+
+  .start-marker { left: 28px; bottom: 34px; }
+  .target-marker { right: 28px; top: 34px; }
+  .feedback-chip {
+    position: static;
+    width: fit-content;
+    margin: 4px;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Icy Hot</p>
+      <h1>How the Prototype Thinks</h1>
+    </div>
+    <div class="status-strip" aria-label="Navigation">
+      <span><b>Story</b> sense, decide, respond</span>
+      <span><b>Details</b> lower on page</span>
+    </div>
+  </header>
+
+  <main class="wiring-page">
+    <section class="hero-explain">
+      <div>
+        <p class="eyebrow">No jargon version</p>
+        <h2>Icy Hot is a movement guide: it starts from a known position, watches acceleration, and guides the user with sound and direction.</h2>
+      </div>
+      <p>
+        At the beginning, we tell the system where the user starts and where the target is. After that, the motion sensor feels acceleration, the code estimates where the user has moved, the speaker gives feedback, and the servo acts like a physical compass pointing toward the target.
+      </p>
+    </section>
+
+    <section class="story-board" aria-label="Simple story of how the prototype works">
+      <article class="story-scene senses">
+        <div class="scene-art">
+          <span class="motion-ring r1"></span>
+          <span class="motion-ring r2"></span>
+          <span class="motion-ring r3"></span>
+          <span class="motion-dot d1"></span>
+          <span class="motion-dot d2"></span>
+          <span class="motion-dot d3"></span>
+        </div>
+        <p class="eyebrow">1. Start and sense</p>
+        <h2>We set the starting point, then read movement</h2>
+        <p>Think of the starting point like setting a map marker. After that, the movement sensor reports acceleration, which is like the body saying, "I just sped up this way."</p>
+      </article>
+
+      <article class="story-scene brain">
+        <div class="scene-art brain-art">
+          <span class="brain-chip">brain</span>
+          <span class="code-line c1"></span>
+          <span class="code-line c2"></span>
+          <span class="code-line c3"></span>
+        </div>
+        <p class="eyebrow">2. Decide</p>
+        <h2>It estimates position over time</h2>
+        <p>The code keeps updating an estimated path: starting position plus movement over time. It is not magic GPS; it is more like dead reckoning from acceleration.</p>
+      </article>
+
+      <article class="story-scene response">
+        <div class="scene-art response-art">
+          <span class="servo-pointer"></span>
+          <span class="speaker-cone"></span>
+          <span class="sound s1"></span>
+          <span class="sound s2"></span>
+          <span class="sound s3"></span>
+        </div>
+        <p class="eyebrow">3. Respond</p>
+        <h2>It gives human feedback</h2>
+        <p>The speaker tells the user how urgent the correction is. The servo acts like an object-oriented compass: it physically points toward the direction the user should care about.</p>
+      </article>
+    </section>
+
+    <section class="proximity-map" aria-label="Movement position guidance map">
+      <div class="map-copy">
+        <p class="eyebrow">Demo behavior</p>
+        <h2>Movement becomes a path toward the target</h2>
+        <p>
+          The user starts at a known point. Acceleration updates the estimated position. The servo points toward the target. The speaker gives simple feedback: quiet when aligned, slow beep when slightly off, fast beep when drifting, solid tone when the movement needs immediate correction.
+        </p>
+      </div>
+      <div class="map-visual position-map" aria-label="Position estimate and feedback zones">
+        <div class="start-marker"><b>start</b></div>
+        <div class="target-marker"><span></span><b>target</b></div>
+        <svg class="path-map" viewBox="0 0 760 380" aria-label="Path from start to target">
+          <path class="ideal-path" d="M88 300 C215 248 340 205 470 168 C550 145 620 125 682 96" />
+          <path class="estimated-path" d="M88 300 C195 280 300 246 390 220 C485 192 555 192 632 146 C650 135 666 120 682 96" />
+          <path class="servo-arrow" d="M555 268 L648 158" marker-end="url(#servoArrow)" />
+        </svg>
+        <div class="feedback-chip quiet-chip">aligned: quiet</div>
+        <div class="feedback-chip slow-chip">slight drift: slow beep</div>
+        <div class="feedback-chip fast-chip">drifting: fast beep</div>
+        <div class="feedback-chip solid-chip">strong correction: solid tone</div>
+      </div>
+    </section>
+
+    <section class="wire-layout" aria-label="Wiring diagram">
+      <div class="diagram-guide">
+        <p class="eyebrow">Hardware details</p>
+        <h2>Three demo connections</h2>
+        <div class="legend">
+          <span><b class="legend-dot i2c-dot"></b>movement in</span>
+          <span><b class="legend-dot pwm-dot"></b>sound out</span>
+          <span><b class="legend-dot servo-dot"></b>direction out</span>
+        </div>
+      </div>
+
+      <article class="module nucleo">
+        <span class="node-badge controller-badge">0</span>
+        <p class="eyebrow">Controller</p>
+        <h2>Board brain</h2>
+        <p class="plain-note">Stores the starting position, estimates movement over time, then chooses sound and servo feedback.</p>
+      </article>
+
+      <article class="module sensor imu">
+        <span class="node-badge i2c-badge">1</span>
+        <p class="eyebrow">Movement in</p>
+        <h3>Motion sensor</h3>
+        <p class="plain-note">Reports acceleration. This is the input used to update the user's estimated position.</p>
+      </article>
+
+      <article class="module sensor speaker">
+        <span class="node-badge pwm-badge">2</span>
+        <p class="eyebrow">Sound out</p>
+        <h3>Speaker</h3>
+        <p class="plain-note">Turns correction state into beeps: quiet, slow beep, fast beep, or solid tone.</p>
+      </article>
+
+      <article class="module sensor servo">
+        <span class="node-badge servo-badge">3</span>
+        <p class="eyebrow">Direction out</p>
+        <h3>Servo compass</h3>
+        <p class="plain-note">Physically points toward the target/object direction. It turns guidance into something visible.</p>
+      </article>
+
+      <svg class="wires" viewBox="0 0 1200 760" role="img" aria-label="Signal connections between the STM32G4 board and modules">
+        <defs>
+          <marker id="servoArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#7a4fb0" />
+          </marker>
+        </defs>
+        <path class="wire i2c" d="M498 334 C392 274 302 238 210 222" />
+        <path class="wire pwm" d="M704 420 C790 492 900 520 994 528" />
+        <path class="wire servo-wire" d="M704 316 C800 250 905 224 994 214" />
+      </svg>
+    </section>
+
+    <section class="mechanics-grid">
+      <article class="mechanic-card">
+        <p class="eyebrow">1. Starting point</p>
+        <h3>Position is configured at the beginning</h3>
+        <p>The demo starts with a known user position. That gives the system a map origin, like setting the first point before drawing a route.</p>
+      </article>
+      <article class="mechanic-card">
+        <p class="eyebrow">2. Movement estimate</p>
+        <h3>Acceleration updates the path</h3>
+        <p>The IMU reports acceleration. The firmware uses those readings over time to estimate how the user moved from the start.</p>
+      </article>
+      <article class="mechanic-card">
+        <p class="eyebrow">3. Human feedback</p>
+        <h3>Sound makes the estimate usable</h3>
+        <p>The speaker uses beep patterns for alignment or correction. Quiet means okay; more urgent sound means the movement/path needs attention.</p>
+      </article>
+      <article class="mechanic-card">
+        <p class="eyebrow">4. Direction cue</p>
+        <h3>The servo is a physical compass</h3>
+        <p>The servo angle points toward the target/object direction, so the user sees guidance as motion, not as a number.</p>
+      </article>
+    </section>
+
+    <section class="pin-table-section">
+      <div>
+        <p class="eyebrow">Bench wiring table</p>
+        <h2>Use this as the physical checklist</h2>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Part</th>
+            <th>Signal</th>
+            <th>STM32/Nucleo pin</th>
+            <th>How to know it works</th>
+            <th>Human translation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Board</td>
+            <td>LED heartbeat</td>
+            <td>D13 / PA5</td>
+            <td>LED blinks every 500 ms after flash.</td>
+            <td>The board is alive and your code is actually running.</td>
+          </tr>
+          <tr>
+            <td>Serial</td>
+            <td>Debug log</td>
+            <td>STLINK VCP</td>
+            <td>Terminal prints boot and sensor readings.</td>
+            <td>This is console.log for the physical board.</td>
+          </tr>
+          <tr>
+            <td>IMU</td>
+            <td>SDA / SCL</td>
+            <td>D14 / PB9 and D15 / PB8</td>
+            <td>WHO_AM_I is stable; accel values change when moved.</td>
+            <td>The board can read user movement and estimate position over time.</td>
+          </tr>
+          <tr>
+            <td>Speaker</td>
+            <td>Audio signal</td>
+            <td>D11 / PA7 PWM</td>
+            <td>Beep pattern changes when feedback state changes.</td>
+            <td>The board can turn guidance into sound.</td>
+          </tr>
+          <tr>
+            <td>Servo</td>
+            <td>Compass angle</td>
+            <td>D6 / PB10 PWM</td>
+            <td>Servo points to commanded angle.</td>
+            <td>The board can turn target direction into a physical pointer.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="clinical-section">
+      <div>
+        <p class="eyebrow">Rehabilitation layer</p>
+        <h2>Gait and clinical context sit on top of the same movement loop</h2>
+      </div>
+      <p>
+        Once the system can estimate movement and provide feedback, the rehab story becomes clearer: gait patterns, stability, drift, and correction timing can be interpreted clinically. The hardware loop stays simple: movement in, position estimate, speaker feedback, servo direction cue.
+      </p>
+    </section>
+
+    <section class="talk-track">
+      <p class="eyebrow">How to explain it to a judge</p>
+      <h2>Thirty-second mechanics story</h2>
+      <p>
+        The prototype starts from a configured user position. As the user moves, the motion sensor measures acceleration, and the code estimates position over time. The speaker gives immediate feedback, while the servo acts like a physical compass pointing toward the object or direction of interest. For rehabilitation, the same movement loop can support gait and clinical interpretation.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
